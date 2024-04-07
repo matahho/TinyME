@@ -563,5 +563,33 @@ public class OrderHandlerTest {
         assertThat(shareholder1.hasEnoughPositionsOn(security, 100_000)).isTrue();
         assertThat(shareholder.hasEnoughPositionsOn(security, 500)).isTrue();
     }
+    @Test
+    void invalid_new_order_with_negative_meq_value_errors() {
+        Security aSecurity = Security.builder().isin("XXX").lotSize(10).tickSize(10).build();
+        securityRepository.addSecurity(aSecurity);
+        orderHandler.handleEnterOrder(EnterOrderRq.createNewOrderRq(1, "XXX", 1, LocalDateTime.now(), Side.SELL, 300, 15450, 1, shareholder.getShareholderId(), 0, -100));
+        ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
+        verify(eventPublisher).publish(orderRejectedCaptor.capture());
+        OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
+        assertThat(outputEvent.getOrderId()).isEqualTo(1);
+        assertThat(outputEvent.getErrors()).containsOnly(
+                Message.ORDER_MEQ_IS_NOT_POSITIVE
+        );
+    }
+
+
+    @Test
+    void invalid_new_order_meq_value_is_bigger_than_quantity_errors() {
+        Security aSecurity = Security.builder().isin("XXX").lotSize(10).tickSize(10).build();
+        securityRepository.addSecurity(aSecurity);
+        orderHandler.handleEnterOrder(EnterOrderRq.createNewOrderRq(1, "XXX", 1, LocalDateTime.now(), Side.BUY, 300, 15450, 1, shareholder.getShareholderId(), 0, 400));
+        ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
+        verify(eventPublisher).publish(orderRejectedCaptor.capture());
+        OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
+        assertThat(outputEvent.getOrderId()).isEqualTo(1);
+        assertThat(outputEvent.getErrors()).containsOnly(
+                Message.ORDER_MEQ_IS_BIGGER_THAN_QUANTITY
+        );
+    }
 
 }
