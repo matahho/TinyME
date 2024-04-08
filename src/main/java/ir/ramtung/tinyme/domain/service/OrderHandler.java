@@ -104,7 +104,7 @@ public class OrderHandler {
             errors.add(Message.INVALID_PEAK_SIZE);
         if (enterOrderRq.getMinimumExecutionQuantity() < 0)
             errors.add(Message.ORDER_MEQ_IS_NOT_POSITIVE);
-        if (enterOrderRq.getMinimumExecutionQuantity() > enterOrderRq.getMinimumExecutionQuantity())
+        if (enterOrderRq.getMinimumExecutionQuantity() > enterOrderRq.getQuantity())
             errors.add(Message.ORDER_MEQ_IS_BIGGER_THAN_QUANTITY);
         if (!errors.isEmpty())
             throw new InvalidRequestException(errors);
