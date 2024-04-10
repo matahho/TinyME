@@ -608,7 +608,7 @@ public class OrderHandlerTest {
 
 
     @Test
-    void reject_order_because_of_no_order_to_match_with_meq(){
+    void reject_sell_order_because_of_meq_condition_not_met(){
         Order matchingBuyOrder = new Order(100, security, Side.BUY, 100, 15500, broker1, shareholder);
         Order incomingSellOrder = new Order(200, security, Side.SELL, 300, 15450, broker2, shareholder);
         security.getOrderBook().enqueue(matchingBuyOrder);
@@ -624,6 +624,35 @@ public class OrderHandlerTest {
                                                                     shareholder.getShareholderId(),
                                                                     0,
                                                                     200));
+
+        ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
+        verify(eventPublisher).publish(orderRejectedCaptor.capture());
+        OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
+        assertThat(outputEvent.getOrderId()).isEqualTo(200);
+        assertThat(outputEvent.getErrors()).containsOnly(
+                Message.ORDER_FAILED_TO_REACH_MEQ
+        );
+
+    }
+
+    @Test
+    void reject_buy_order_because_of_meq_condition_not_met(){
+        Order matchingSellOrder = new Order(100, security, Side.SELL, 100, 15450, broker2, shareholder);
+        broker1.increaseCreditBy(10000000);
+        Order incomingBuyOrder = new Order(200, security, Side.BUY, 200, 15500, broker1, shareholder);
+        security.getOrderBook().enqueue(matchingSellOrder);
+
+        orderHandler.handleEnterOrder(EnterOrderRq.createNewOrderRq(1,
+                "ABC",
+                incomingBuyOrder.getOrderId(),
+                LocalDateTime.now(),
+                incomingBuyOrder.getSide(),
+                incomingBuyOrder.getQuantity(),
+                incomingBuyOrder.getPrice(),
+                incomingBuyOrder.getBroker().getBrokerId(),
+                shareholder.getShareholderId(),
+                0,
+                200));
 
         ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
         verify(eventPublisher).publish(orderRejectedCaptor.capture());
