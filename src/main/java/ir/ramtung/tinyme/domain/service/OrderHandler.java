@@ -106,6 +106,8 @@ public class OrderHandler {
             errors.add(Message.ORDER_MEQ_IS_NOT_POSITIVE);
         if (enterOrderRq.getMinimumExecutionQuantity() > enterOrderRq.getQuantity())
             errors.add(Message.ORDER_MEQ_IS_BIGGER_THAN_QUANTITY);
+        if (enterOrderRq.getRequestType() == OrderEntryType.UPDATE_ORDER && enterOrderRq.getMinimumExecutionQuantity() > 0)
+            errors.add(Message.ORDER_UPDATE_MEQ_NOT_ZERO);
         if (!errors.isEmpty())
             throw new InvalidRequestException(errors);
     }
