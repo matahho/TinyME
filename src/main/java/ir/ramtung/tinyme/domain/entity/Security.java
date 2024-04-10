@@ -35,6 +35,10 @@ public class Security {
             MatchResult meqMatchResult = matcher.execute(meqOrder);
             if (meqMatchResult.remainder().getValue() != 0 ){
                 //TODO : must rollback trades
+                System.out.println("FALIIID");
+            }
+            else{
+                enterOrderRq.setQuantity(enterOrderRq.getQuantity() - enterOrderRq.getMinimumExecutionQuantity());
             }
         }
 

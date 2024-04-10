@@ -54,10 +54,11 @@ class SecurityTest {
     @Test
     void success_meq_match(){
         EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(10, security.getIsin(), 11, LocalDateTime.now(), SELL, 10000, 15700, broker.getBrokerId(), shareholder.getShareholderId(), 0, 304);
+        int expectedRemainedQuantity = enterOrderRq.getQuantity() - enterOrderRq.getMinimumExecutionQuantity();
         MatchResult matchResult = security.newOrder(enterOrderRq , broker,shareholder , matcher);
         assertThat(security.getOrderBook().getBuyQueue().size()).isEqualTo(4);
         assertThat(security.getOrderBook().getSellQueue().size()).isEqualTo(6);
-        assertThat(security.getOrderBook().getSellQueue().getLast().getQuantity()).isEqualTo(enterOrderRq.getQuantity() - enterOrderRq.getMinimumExecutionQuantity());
+        assertThat(security.getOrderBook().getSellQueue().getFirst().getQuantity()).isEqualTo(expectedRemainedQuantity);
     }
 
     @Test
