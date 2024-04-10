@@ -754,5 +754,74 @@ public class OrderHandlerTest {
 
     }
 
+    @Test
+    void new_buy_order_with_meq_gets_accepted_with_remainder(){
+        Order matchingSellOrder1 = new Order(100, security, Side.SELL, 100, 15450, broker1, shareholder);
+        Order matchingSellOrder2 = new Order(110, security, Side.SELL, 200, 15150, broker1, shareholder);
+        Order matchingSellOrder3 = new Order(120, security, Side.SELL, 300, 15600, broker1, shareholder);
+        Broker buyerBroker = Broker.builder().brokerId(4).credit(100_000_000).build();
+        brokerRepository.addBroker(buyerBroker);
+        Order incomingBuyOrder = new Order(200, security, Side.BUY, 1000, 15500, buyerBroker, shareholder);
+
+        security.getOrderBook().enqueue(matchingSellOrder1);
+        security.getOrderBook().enqueue(matchingSellOrder2);
+        security.getOrderBook().enqueue(matchingSellOrder3);
+
+        orderHandler.handleEnterOrder(EnterOrderRq.createNewOrderRq(1,
+                incomingBuyOrder.getSecurity().getIsin(),
+                incomingBuyOrder.getOrderId(),
+                incomingBuyOrder.getEntryTime(),
+                incomingBuyOrder.getSide(),
+                incomingBuyOrder.getTotalQuantity(),
+                incomingBuyOrder.getPrice(),
+                incomingBuyOrder.getBroker().getBrokerId(),
+                incomingBuyOrder.getShareholder().getShareholderId(),
+                0,
+                150));
+
+        assertThat(security.getOrderBook().getBuyQueue().size()).isEqualTo(1);
+        assertThat(security.getOrderBook().getSellQueue().getFirst()).isEqualTo(matchingSellOrder3);
+
+        assertThat(security.getOrderBook().getSellQueue()).containsExactly(matchingSellOrder3);
+
+        ArgumentCaptor<OrderAcceptedEvent> orderAcceptedCaptor = ArgumentCaptor.forClass(OrderAcceptedEvent.class);
+        verify(eventPublisher).publish(orderAcceptedCaptor.capture());
+        OrderAcceptedEvent outputEvent = orderAcceptedCaptor.getValue();
+        assertThat(outputEvent.getOrderId()).isEqualTo(200);
+    }
+
+    @Test
+    void new_sell_order_with_meq_gets_accepted_with_remainder(){
+        Order matchingBuyOrder1 = new Order(100, security, Side.BUY, 300, 15560, broker1, shareholder);
+        Order matchingBuyOrder2 = new Order(110, security, Side.BUY, 300, 15550, broker1, shareholder);
+        Order matchingBuyOrder3 = new Order(120, security, Side.BUY, 300, 15400, broker1, shareholder);
+        Order incomingSellOrder = new Order(200, security, Side.SELL, 1000, 15450, broker2, shareholder);
+
+        security.getOrderBook().enqueue(matchingBuyOrder1);
+        security.getOrderBook().enqueue(matchingBuyOrder2);
+        security.getOrderBook().enqueue(matchingBuyOrder3);
+
+        orderHandler.handleEnterOrder(EnterOrderRq.createNewOrderRq(1,
+                incomingSellOrder.getSecurity().getIsin(),
+                incomingSellOrder.getOrderId(),
+                incomingSellOrder.getEntryTime(),
+                incomingSellOrder.getSide(),
+                incomingSellOrder.getTotalQuantity(),
+                incomingSellOrder.getPrice(),
+                incomingSellOrder.getBroker().getBrokerId(),
+                incomingSellOrder.getShareholder().getShareholderId(),
+                0,
+                500));
+
+        assertThat(security.getOrderBook().getSellQueue().size()).isEqualTo(1);
+
+        assertThat(security.getOrderBook().getBuyQueue()).containsExactly(matchingBuyOrder3);
+
+
+        ArgumentCaptor<OrderAcceptedEvent> orderAcceptedCaptor = ArgumentCaptor.forClass(OrderAcceptedEvent.class);
+        verify(eventPublisher).publish(orderAcceptedCaptor.capture());
+        OrderAcceptedEvent outputEvent = orderAcceptedCaptor.getValue();
+        assertThat(outputEvent.getOrderId()).isEqualTo(200);
+    }
 
 }
