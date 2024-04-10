@@ -669,8 +669,8 @@ public class OrderHandlerTest {
 
     @Test
     void rollback_multiple_trades_by_not_meeting_sell_order_meq_condition(){
-        Order matchingBuyOrder1 = new Order(100, security, Side.BUY, 300, 15500, broker1, shareholder);
-        Order matchingBuyOrder2 = new Order(110, security, Side.BUY, 300, 15500, broker1, shareholder);
+        Order matchingBuyOrder1 = new Order(100, security, Side.BUY, 300, 15560, broker1, shareholder);
+        Order matchingBuyOrder2 = new Order(110, security, Side.BUY, 300, 15550, broker1, shareholder);
         Order matchingBuyOrder3 = new Order(120, security, Side.BUY, 300, 15500, broker1, shareholder);
         Order incomingSellOrder = new Order(200, security, Side.SELL, 1000, 15450, broker2, shareholder);
 
