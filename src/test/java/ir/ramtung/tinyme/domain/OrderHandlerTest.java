@@ -665,7 +665,49 @@ public class OrderHandlerTest {
         assertThat(outputEvent.getErrors()).containsOnly(
                 Message.ORDER_FAILED_TO_REACH_MEQ
         );
+    }
+
+    @Test
+    void rollback_multiple_trades_by_not_metting_meq_condition(){
+        Order matchingBuyOrder1 = new Order(100, security, Side.BUY, 300, 15500, broker1, shareholder);
+        Order matchingBuyOrder2 = new Order(110, security, Side.BUY, 300, 15500, broker1, shareholder);
+        Order matchingBuyOrder3 = new Order(120, security, Side.BUY, 300, 15500, broker1, shareholder);
+        Order incomingSellOrder = new Order(200, security, Side.SELL, 1000, 15450, broker2, shareholder);
+
+        security.getOrderBook().enqueue(matchingBuyOrder1);
+        security.getOrderBook().enqueue(matchingBuyOrder2);
+        security.getOrderBook().enqueue(matchingBuyOrder3);
+
+        orderHandler.handleEnterOrder(EnterOrderRq.createNewOrderRq(1,
+                incomingSellOrder.getSecurity().getIsin(),
+                incomingSellOrder.getOrderId(),
+                incomingSellOrder.getEntryTime(),
+                incomingSellOrder.getSide(),
+                incomingSellOrder.getTotalQuantity(),
+                incomingSellOrder.getPrice(),
+                incomingSellOrder.getBroker().getBrokerId(),
+                incomingSellOrder.getShareholder().getShareholderId(),
+                0,
+                1000));
+
+        assertThat(security.getOrderBook().getSellQueue().size()).isEqualTo(0);
+
+        assertThat(security.getOrderBook().getBuyQueue()).containsExactly(
+                matchingBuyOrder1,
+                matchingBuyOrder2,
+                matchingBuyOrder3
+        );
+
+
+        ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
+        verify(eventPublisher).publish(orderRejectedCaptor.capture());
+        OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
+        assertThat(outputEvent.getOrderId()).isEqualTo(200);
+        assertThat(outputEvent.getErrors()).containsOnly(
+                Message.ORDER_FAILED_TO_REACH_MEQ
+        );
 
     }
+
 
 }
