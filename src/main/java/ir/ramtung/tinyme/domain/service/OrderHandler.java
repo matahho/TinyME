@@ -56,6 +56,10 @@ public class OrderHandler {
                 eventPublisher.publish(new OrderRejectedEvent(enterOrderRq.getRequestId(), enterOrderRq.getOrderId(), List.of(Message.SELLER_HAS_NOT_ENOUGH_POSITIONS)));
                 return;
             }
+            if (matchResult.outcome() == MatchingOutcome.NOT_ENOUGH_INITIAL_EXECUTION) {
+                eventPublisher.publish(new OrderRejectedEvent(enterOrderRq.getRequestId(), enterOrderRq.getOrderId(), List.of(Message.ORDER_FAILED_TO_REACH_MEQ)));
+                return;
+            }
             if (enterOrderRq.getRequestType() == OrderEntryType.NEW_ORDER)
                 eventPublisher.publish(new OrderAcceptedEvent(enterOrderRq.getRequestId(), enterOrderRq.getOrderId()));
             else
@@ -106,6 +110,8 @@ public class OrderHandler {
             errors.add(Message.ORDER_MEQ_IS_NOT_POSITIVE);
         if (enterOrderRq.getMinimumExecutionQuantity() > enterOrderRq.getQuantity())
             errors.add(Message.ORDER_MEQ_IS_BIGGER_THAN_QUANTITY);
+        if (enterOrderRq.getRequestType() == OrderEntryType.UPDATE_ORDER && enterOrderRq.getMinimumExecutionQuantity() > 0)
+            errors.add(Message.ORDER_UPDATE_MEQ_NOT_ZERO);
         if (!errors.isEmpty())
             throw new InvalidRequestException(errors);
     }

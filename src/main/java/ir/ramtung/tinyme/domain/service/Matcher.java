@@ -11,6 +11,7 @@ public class Matcher {
     public MatchResult match(Order newOrder) {
         OrderBook orderBook = newOrder.getSecurity().getOrderBook();
         LinkedList<Trade> trades = new LinkedList<>();
+        int executedQuantity = 0;
 
         while (orderBook.hasOrderOfType(newOrder.getSide().opposite()) && newOrder.getQuantity() > 0) {
             Order matchingOrder = orderBook.matchWithFirst(newOrder);
@@ -28,6 +29,7 @@ public class Matcher {
             }
             trade.increaseSellersCredit();
             trades.add(trade);
+            executedQuantity += trade.getQuantity();
 
             if (newOrder.getQuantity() >= matchingOrder.getQuantity()) {
                 newOrder.decreaseQuantity(matchingOrder.getQuantity());
@@ -43,17 +45,31 @@ public class Matcher {
                 newOrder.makeQuantityZero();
             }
         }
+        if (executedQuantity < newOrder.getMinimumExecutionQuantity()) {
+            rollbackTrades(newOrder, trades);
+            return MatchResult.notEnoughInitialExecution();
+        }
         return MatchResult.executed(newOrder, trades);
     }
 
     private void rollbackTrades(Order newOrder, LinkedList<Trade> trades) {
-        assert newOrder.getSide() == Side.BUY;
-        newOrder.getBroker().increaseCreditBy(trades.stream().mapToLong(Trade::getTradedValue).sum());
-        trades.forEach(trade -> trade.getSell().getBroker().decreaseCreditBy(trade.getTradedValue()));
+        if(newOrder.getSide() == Side.BUY) {
+            newOrder.getBroker().increaseCreditBy(trades.stream().mapToLong(Trade::getTradedValue).sum());
+            trades.forEach(trade -> trade.getSell().getBroker().decreaseCreditBy(trade.getTradedValue()));
 
-        ListIterator<Trade> it = trades.listIterator(trades.size());
-        while (it.hasPrevious()) {
-            newOrder.getSecurity().getOrderBook().restoreSellOrder(it.previous().getSell());
+            ListIterator<Trade> it = trades.listIterator(trades.size());
+            while (it.hasPrevious()) {
+                newOrder.getSecurity().getOrderBook().restoreSellOrder(it.previous().getSell());
+            }
+        }
+        else { //newOrder.getSide() == Side.SELL
+            newOrder.getBroker().decreaseCreditBy(trades.stream().mapToLong(Trade::getTradedValue).sum());
+            trades.forEach(trade -> trade.getBuy().getBroker().increaseCreditBy(trade.getTradedValue()));
+
+            ListIterator<Trade> it = trades.listIterator(trades.size());
+            while(it.hasPrevious()){
+                newOrder.getSecurity().getOrderBook().restoreBuyOrder(it.previous().getBuy());
+            }
         }
     }
 
@@ -61,6 +77,10 @@ public class Matcher {
         MatchResult result = match(order);
         if (result.outcome() == MatchingOutcome.NOT_ENOUGH_CREDIT)
             return result;
+
+        if (result.outcome() == MatchingOutcome.NOT_ENOUGH_INITIAL_EXECUTION){
+            return result;
+        }
 
         if (result.remainder().getQuantity() > 0) {
             if (order.getSide() == Side.BUY) {
