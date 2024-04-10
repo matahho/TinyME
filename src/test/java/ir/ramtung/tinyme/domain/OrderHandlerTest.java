@@ -714,8 +714,9 @@ public class OrderHandlerTest {
         Order matchingSellOrder1 = new Order(100, security, Side.SELL, 30, 15450, broker1, shareholder);
         Order matchingSellOrder2 = new Order(110, security, Side.SELL, 30, 15150, broker1, shareholder);
         Order matchingSellOrder3 = new Order(120, security, Side.SELL, 30, 15600, broker1, shareholder);
-        broker2.increaseCreditBy(999_999_999);
-        Order incomingBuyOrder = new Order(200, security, Side.BUY, 100, 15500, broker2, shareholder);
+        Broker buyerBroker = Broker.builder().brokerId(4).credit(100_000_000).build();
+        brokerRepository.addBroker(buyerBroker);
+        Order incomingBuyOrder = new Order(200, security, Side.BUY, 100, 15500, buyerBroker, shareholder);
 
         security.getOrderBook().enqueue(matchingSellOrder1);
         security.getOrderBook().enqueue(matchingSellOrder2);
