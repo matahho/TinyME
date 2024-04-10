@@ -12,6 +12,9 @@ public final class MatchResult {
     public static MatchResult executed(Order remainder, List<Trade> trades) {
         return new MatchResult(MatchingOutcome.EXECUTED, remainder, new LinkedList<>(trades));
     }
+    public static MatchResult notEnoughInitialExecution() {
+        return new MatchResult(MatchingOutcome.NOT_ENOUGH_INITIAL_EXECUTION, null, new LinkedList<>());
+    }
 
     public static MatchResult notEnoughCredit() {
         return new MatchResult(MatchingOutcome.NOT_ENOUGH_CREDIT, null, new LinkedList<>());
