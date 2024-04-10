@@ -17,7 +17,6 @@ public class Order {
     protected Security security;
     protected Side side;
     protected int quantity;
-    protected int minimumExecutionQuantity = 0;
     protected int price;
     protected Broker broker;
     protected Shareholder shareholder;
@@ -25,6 +24,8 @@ public class Order {
     protected LocalDateTime entryTime = LocalDateTime.now();
     @Builder.Default
     protected OrderStatus status = OrderStatus.NEW;
+    @Builder.Default
+    protected int minimumExecutionQuantity = 0;
 
     public Order(long orderId, Security security, Side side, int quantity, int price, Broker broker, Shareholder shareholder, LocalDateTime entryTime, OrderStatus status, int minimumExecutionQuantity) {
         this.orderId = orderId;
