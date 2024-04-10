@@ -52,6 +52,15 @@ class SecurityTest {
     }
 
     @Test
+    void success_meq_match(){
+        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(10, security.getIsin(), 11, LocalDateTime.now(), SELL, 10000, 15700, broker.getBrokerId(), shareholder.getShareholderId(), 0, 304);
+        MatchResult matchResult = security.newOrder(enterOrderRq , broker,shareholder , matcher);
+        assertThat(security.getOrderBook().getBuyQueue().size()).isEqualTo(4);
+        assertThat(security.getOrderBook().getSellQueue().size()).isEqualTo(6);
+        assertThat(security.getOrderBook().getSellQueue().getLast().getQuantity()).isEqualTo(enterOrderRq.getQuantity() - enterOrderRq.getMinimumExecutionQuantity());
+    }
+
+    @Test
     void reducing_quantity_does_not_change_priority() {
         EnterOrderRq updateOrderRq = EnterOrderRq.createUpdateOrderRq(1, security.getIsin(), 3, LocalDateTime.now(), BUY, 440, 15450, 0, 0, 0, 0);
         assertThatNoException().isThrownBy(() -> security.updateOrder(updateOrderRq, matcher));

@@ -36,8 +36,6 @@ public class Security {
             if (meqMatchResult.remainder().getValue() != 0 ){
                 //TODO : must rollback trades
             }
-            else
-                enterOrderRq.setQuantity(enterOrderRq.getQuantity() - enterOrderRq.getMinimumExecutionQuantity());
         }
 
         Order order;
