@@ -593,23 +593,6 @@ public class OrderHandlerTest {
     }
 
     @Test
-    void reject_order_because_of_no_order_to_match_with_meq(){
-        Security aSecurity = Security.builder().isin("XXX").lotSize(10).tickSize(10).build();
-        securityRepository.addSecurity(aSecurity);
-        broker1.increaseCreditBy(1000000000);
-        orderHandler.handleEnterOrder(EnterOrderRq.createNewOrderRq(1, "XXX", 1, LocalDateTime.now(), Side.BUY, 300, 15450, 1, shareholder.getShareholderId(), 0, 1));
-        ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
-        verify(eventPublisher).publish(orderRejectedCaptor.capture());
-        OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
-        assertThat(outputEvent.getOrderId()).isEqualTo(1);
-        assertThat(outputEvent.getErrors()).containsOnly(
-                Message.ORDER_FAILED_TO_REACH_MEQ
-        );
-    }
-
-
-
-    @Test
     void reject_to_update_meq_field_for_an_order(){
         Order queuedOrder = new Order(200, security, Side.SELL, 500, 15450, broker1, shareholder);
         security.getOrderBook().enqueue(queuedOrder);
@@ -624,5 +607,32 @@ public class OrderHandlerTest {
     }
 
 
+    @Test
+    void reject_order_because_of_no_order_to_match_with_meq(){
+        Order matchingBuyOrder = new Order(100, security, Side.BUY, 100, 15500, broker1, shareholder);
+        Order incomingSellOrder = new Order(200, security, Side.SELL, 300, 15450, broker2, shareholder);
+        security.getOrderBook().enqueue(matchingBuyOrder);
+
+        orderHandler.handleEnterOrder(EnterOrderRq.createNewOrderRq(1,
+                                                                    "ABC",
+                                                                    200,
+                                                                    LocalDateTime.now(),
+                                                                    Side.SELL,
+                                                                    300,
+                                                                    15450,
+                                                                    2,
+                                                                    shareholder.getShareholderId(),
+                                                                    0,
+                                                                    200));
+
+        ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
+        verify(eventPublisher).publish(orderRejectedCaptor.capture());
+        OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
+        assertThat(outputEvent.getOrderId()).isEqualTo(200);
+        assertThat(outputEvent.getErrors()).containsOnly(
+                Message.ORDER_FAILED_TO_REACH_MEQ
+        );
+
+    }
 
 }
