@@ -711,11 +711,11 @@ public class OrderHandlerTest {
 
     @Test
     void rollback_multiple_trades_by_not_meeting_buy_order_meq_condition(){
-        Order matchingSellOrder1 = new Order(100, security, Side.SELL, 300, 15450, broker1, shareholder);
-        Order matchingSellOrder2 = new Order(110, security, Side.SELL, 300, 15150, broker1, shareholder);
-        Order matchingSellOrder3 = new Order(120, security, Side.SELL, 300, 15600, broker1, shareholder);
-
-        Order incomingBuyOrder = new Order(200, security, Side.BUY, 1000, 15500, broker2, shareholder);
+        Order matchingSellOrder1 = new Order(100, security, Side.SELL, 30, 15450, broker1, shareholder);
+        Order matchingSellOrder2 = new Order(110, security, Side.SELL, 30, 15150, broker1, shareholder);
+        Order matchingSellOrder3 = new Order(120, security, Side.SELL, 30, 15600, broker1, shareholder);
+        broker2.increaseCreditBy(999_999_999);
+        Order incomingBuyOrder = new Order(200, security, Side.BUY, 100, 15500, broker2, shareholder);
 
         security.getOrderBook().enqueue(matchingSellOrder1);
         security.getOrderBook().enqueue(matchingSellOrder2);
@@ -731,14 +731,14 @@ public class OrderHandlerTest {
                 incomingBuyOrder.getBroker().getBrokerId(),
                 incomingBuyOrder.getShareholder().getShareholderId(),
                 0,
-                700));
+                70));
 
         assertThat(security.getOrderBook().getBuyQueue().size()).isEqualTo(0);
-        assertThat(security.getOrderBook().getSellQueue().getFirst()).isEqualTo(matchingSellOrder1);
+        assertThat(security.getOrderBook().getSellQueue().getFirst()).isEqualTo(matchingSellOrder2);
 
         assertThat(security.getOrderBook().getSellQueue()).containsExactly(
-                matchingSellOrder1,
                 matchingSellOrder2,
+                matchingSellOrder1,
                 matchingSellOrder3
         );
 
