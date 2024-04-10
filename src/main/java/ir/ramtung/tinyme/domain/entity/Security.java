@@ -26,6 +26,20 @@ public class Security {
                 !shareholder.hasEnoughPositionsOn(this,
                 orderBook.totalSellQuantityByShareholder(shareholder) + enterOrderRq.getQuantity()))
             return MatchResult.notEnoughPositions();
+
+        if (enterOrderRq.getMinimumExecutionQuantity() != 0){
+            Order meqOrder = new Order(enterOrderRq.getOrderId(), this, enterOrderRq.getSide(),
+                    enterOrderRq.getMinimumExecutionQuantity(), enterOrderRq.getPrice(), broker, shareholder,
+                    enterOrderRq.getEntryTime());
+
+            MatchResult meqMatchResult = matcher.execute(meqOrder);
+            if (meqMatchResult.remainder().getValue() != 0 ){
+                //TODO : must rollback trades
+            }
+            else
+                enterOrderRq.setQuantity(enterOrderRq.getQuantity() - enterOrderRq.getMinimumExecutionQuantity());
+        }
+
         Order order;
         if (enterOrderRq.getPeakSize() == 0)
             order = new Order(enterOrderRq.getOrderId(), this, enterOrderRq.getSide(),
