@@ -11,6 +11,7 @@ public class Matcher {
     public MatchResult match(Order newOrder) {
         OrderBook orderBook = newOrder.getSecurity().getOrderBook();
         LinkedList<Trade> trades = new LinkedList<>();
+        int executedQuantity = 0;
 
         while (orderBook.hasOrderOfType(newOrder.getSide().opposite()) && newOrder.getQuantity() > 0) {
             Order matchingOrder = orderBook.matchWithFirst(newOrder);
@@ -28,6 +29,7 @@ public class Matcher {
             }
             trade.increaseSellersCredit();
             trades.add(trade);
+            executedQuantity += trade.getQuantity();
 
             if (newOrder.getQuantity() >= matchingOrder.getQuantity()) {
                 newOrder.decreaseQuantity(matchingOrder.getQuantity());
@@ -43,6 +45,8 @@ public class Matcher {
                 newOrder.makeQuantityZero();
             }
         }
+        if (executedQuantity < newOrder.getMinimumExecutionQuantity())
+            return MatchResult.notEnoughInitialExecution();
         return MatchResult.executed(newOrder, trades);
     }
 
