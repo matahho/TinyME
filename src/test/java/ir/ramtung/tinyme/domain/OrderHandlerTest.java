@@ -609,6 +609,20 @@ public class OrderHandlerTest {
 
 
 
+    @Test
+    void reject_to_update_meq_field_for_an_order(){
+        Order queuedOrder = new Order(200, security, Side.SELL, 500, 15450, broker1, shareholder);
+        security.getOrderBook().enqueue(queuedOrder);
+        orderHandler.handleEnterOrder(EnterOrderRq.createUpdateOrderRq(1, "ABC", 200, LocalDateTime.now(), Side.SELL, 1000, 15450, 1, shareholder.getShareholderId(), 0, 2));
+        ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
+        verify(eventPublisher).publish(orderRejectedCaptor.capture());
+        OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
+        assertThat(outputEvent.getOrderId()).isEqualTo(200);
+        assertThat(outputEvent.getErrors()).containsOnly(
+                Message.ORDER_UPDATE_MEQ_NOT_ZERO
+        );
+    }
+
 
 
 }
