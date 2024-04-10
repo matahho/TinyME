@@ -624,7 +624,8 @@ public class OrderHandlerTest {
                                                                     shareholder.getShareholderId(),
                                                                     0,
                                                                     200));
-
+        assertThat(security.getOrderBook().getBuyQueue().getFirst()).isEqualTo(matchingBuyOrder);
+        assertThat(security.getOrderBook().getSellQueue()).isEmpty();
         ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
         verify(eventPublisher).publish(orderRejectedCaptor.capture());
         OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
@@ -653,6 +654,9 @@ public class OrderHandlerTest {
                 shareholder.getShareholderId(),
                 0,
                 200));
+
+        assertThat(security.getOrderBook().getSellQueue().getFirst()).isEqualTo(matchingSellOrder);
+        assertThat(security.getOrderBook().getBuyQueue()).isEmpty();
 
         ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
         verify(eventPublisher).publish(orderRejectedCaptor.capture());
