@@ -668,7 +668,7 @@ public class OrderHandlerTest {
     }
 
     @Test
-    void rollback_multiple_trades_by_not_metting_meq_condition(){
+    void rollback_multiple_trades_by_not_meeting_sell_order_meq_condition(){
         Order matchingBuyOrder1 = new Order(100, security, Side.BUY, 300, 15500, broker1, shareholder);
         Order matchingBuyOrder2 = new Order(110, security, Side.BUY, 300, 15500, broker1, shareholder);
         Order matchingBuyOrder3 = new Order(120, security, Side.BUY, 300, 15500, broker1, shareholder);
@@ -696,6 +696,50 @@ public class OrderHandlerTest {
                 matchingBuyOrder1,
                 matchingBuyOrder2,
                 matchingBuyOrder3
+        );
+
+
+        ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
+        verify(eventPublisher).publish(orderRejectedCaptor.capture());
+        OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
+        assertThat(outputEvent.getOrderId()).isEqualTo(200);
+        assertThat(outputEvent.getErrors()).containsOnly(
+                Message.ORDER_FAILED_TO_REACH_MEQ
+        );
+
+    }
+
+    @Test
+    void rollback_multiple_trades_by_not_meeting_buy_order_meq_condition(){
+        Order matchingSellOrder1 = new Order(100, security, Side.SELL, 300, 15450, broker1, shareholder);
+        Order matchingSellOrder2 = new Order(110, security, Side.SELL, 300, 15150, broker1, shareholder);
+        Order matchingSellOrder3 = new Order(120, security, Side.SELL, 300, 15600, broker1, shareholder);
+
+        Order incomingBuyOrder = new Order(200, security, Side.BUY, 1000, 15500, broker2, shareholder);
+
+        security.getOrderBook().enqueue(matchingSellOrder1);
+        security.getOrderBook().enqueue(matchingSellOrder2);
+        security.getOrderBook().enqueue(matchingSellOrder3);
+
+        orderHandler.handleEnterOrder(EnterOrderRq.createNewOrderRq(1,
+                incomingBuyOrder.getSecurity().getIsin(),
+                incomingBuyOrder.getOrderId(),
+                incomingBuyOrder.getEntryTime(),
+                incomingBuyOrder.getSide(),
+                incomingBuyOrder.getTotalQuantity(),
+                incomingBuyOrder.getPrice(),
+                incomingBuyOrder.getBroker().getBrokerId(),
+                incomingBuyOrder.getShareholder().getShareholderId(),
+                0,
+                700));
+
+        assertThat(security.getOrderBook().getBuyQueue().size()).isEqualTo(0);
+        assertThat(security.getOrderBook().getSellQueue().getFirst()).isEqualTo(matchingSellOrder1);
+
+        assertThat(security.getOrderBook().getSellQueue()).containsExactly(
+                matchingSellOrder1,
+                matchingSellOrder2,
+                matchingSellOrder3
         );
 
 
