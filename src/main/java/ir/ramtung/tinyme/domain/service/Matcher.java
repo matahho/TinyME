@@ -45,8 +45,11 @@ public class Matcher {
                 newOrder.makeQuantityZero();
             }
         }
-        if (executedQuantity < newOrder.getMinimumExecutionQuantity())
+        if (executedQuantity < newOrder.getMinimumExecutionQuantity()) {
+            if (newOrder.getSide() == Side.BUY)
+                rollbackTrades(newOrder, trades);
             return MatchResult.notEnoughInitialExecution();
+        }
         return MatchResult.executed(newOrder, trades);
     }
 
@@ -67,7 +70,6 @@ public class Matcher {
             return result;
 
         if (result.outcome() == MatchingOutcome.NOT_ENOUGH_INITIAL_EXECUTION){
-            rollbackTrades(order, result.trades());
             return result;
         }
 
