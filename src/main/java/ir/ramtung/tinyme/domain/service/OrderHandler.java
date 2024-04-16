@@ -91,8 +91,6 @@ public class OrderHandler {
             errors.add(Message.ORDER_QUANTITY_NOT_POSITIVE);
         if (enterOrderRq.getPrice() <= 0)
             errors.add(Message.ORDER_PRICE_NOT_POSITIVE);
-        if (enterOrderRq.getStopPrice() <= 0)
-            errors.add(Message.STOP_PRICE_NOT_POSITIVE);
         Security security = securityRepository.findSecurityByIsin(enterOrderRq.getSecurityIsin());
         if (security == null)
             errors.add(Message.UNKNOWN_SECURITY_ISIN);
@@ -114,6 +112,8 @@ public class OrderHandler {
             errors.add(Message.ORDER_MEQ_IS_BIGGER_THAN_QUANTITY);
         if (enterOrderRq.getRequestType() == OrderEntryType.UPDATE_ORDER && enterOrderRq.getMinimumExecutionQuantity() > 0)
             errors.add(Message.ORDER_UPDATE_MEQ_NOT_ZERO);
+        if (enterOrderRq.getStopPrice() < 0)
+            errors.add(Message.STOP_PRICE_NOT_POSITIVE);
         if (enterOrderRq.getStopPrice() != 0 && enterOrderRq.getMinimumExecutionQuantity() != 0)
             errors.add(Message.STOP_LIMIT_ORDER_MEQ_NOT_ZERO);
         if (!errors.isEmpty())
