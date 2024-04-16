@@ -18,4 +18,6 @@ public class Message {
     public static final String ORDER_MEQ_IS_BIGGER_THAN_QUANTITY = "Order Minimum Execution Quantity is not valid (Bigger than Order Quantity)";
     public static final String ORDER_UPDATE_MEQ_NOT_ZERO = "Order Update has a non-zero MEQ value";
     public static final String ORDER_FAILED_TO_REACH_MEQ = "Order failed to reach minimum execution quantity";
+    public static final String STOP_LIMIT_ORDER_MEQ_NOT_ZERO = "Stop Limit Order has a non-zero MEQ value";
+    public static final String STOP_PRICE_NOT_POSITIVE = "Stop price is not-positive";
 }
