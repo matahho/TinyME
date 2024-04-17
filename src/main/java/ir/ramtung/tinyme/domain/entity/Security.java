@@ -21,6 +21,8 @@ public class Security {
     @Builder.Default
     private OrderBook orderBook = new OrderBook();
     @Builder.Default
+    private OrderBook inactiveOrderBook = new OrderBook();
+    @Builder.Default
     private int marketPrice = 0;
 
     public MatchResult newOrder(EnterOrderRq enterOrderRq, Broker broker, Shareholder shareholder, Matcher matcher) {
