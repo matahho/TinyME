@@ -38,9 +38,11 @@ public class Security {
                     || (enterOrderRq.getSide() == Side.BUY && enterOrderRq.getStopPrice() >= marketPrice))
             order = new Order(enterOrderRq.getOrderId(), this, enterOrderRq.getSide(),
                     enterOrderRq.getQuantity(), enterOrderRq.getPrice(), broker, shareholder, enterOrderRq.getEntryTime(), OrderStatus.NEW);
-        else if ((enterOrderRq.getStopPrice() != 0))
-            order = new StopLimitOrder(enterOrderRq.getOrderId(), this, enterOrderRq.getSide(),
-                    enterOrderRq.getQuantity(), enterOrderRq.getPrice(), broker, shareholder, enterOrderRq.getEntryTime(), enterOrderRq.getStopPrice());
+        else if ((enterOrderRq.getStopPrice() != 0)) {
+            inactiveOrderBook.enqueue(new StopLimitOrder(enterOrderRq.getOrderId(), this, enterOrderRq.getSide(),
+                    enterOrderRq.getQuantity(), enterOrderRq.getPrice(), broker, shareholder, enterOrderRq.getEntryTime(), enterOrderRq.getStopPrice()));
+            return MatchResult.notEnoughMarketPrice();
+        }
         else
             order = new IcebergOrder(enterOrderRq.getOrderId(), this, enterOrderRq.getSide(),
                     enterOrderRq.getQuantity(), enterOrderRq.getPrice(), broker, shareholder,
