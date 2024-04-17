@@ -1,5 +1,6 @@
 package ir.ramtung.tinyme.domain.entity;
 
+import ir.ramtung.tinyme.messaging.request.EnterOrderRq;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -33,6 +34,26 @@ public class StopLimitOrder extends Order{
     public Order snapshotWithQuantity(int newQuantity){
         return new StopLimitOrder(orderId, security, side, newQuantity, price, broker, shareholder, entryTime, status, stopPrice);
     }
+
+    @Override
+    public boolean queuesBefore(Order order) {
+        if (order.getSide() == Side.BUY) {
+            return stopPrice > order.getPrice();
+        } else {
+            return stopPrice < order.getPrice();
+        }
+    }
+
+
+    public void activate() {this.markAsNew();}
+
+    @Override
+    public void updateFromRequest(EnterOrderRq updateOrderRq) {
+        super.updateFromRequest(updateOrderRq);
+        stopPrice = updateOrderRq.getStopPrice();
+    }
+
+
 
 
 
