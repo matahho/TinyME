@@ -20,6 +20,8 @@ public class Security {
     private int lotSize = 1;
     @Builder.Default
     private OrderBook orderBook = new OrderBook();
+    @Builder.Default
+    private int marketPrice = 0;
 
     public MatchResult newOrder(EnterOrderRq enterOrderRq, Broker broker, Shareholder shareholder, Matcher matcher) {
         if (enterOrderRq.getSide() == Side.SELL &&
@@ -93,4 +95,6 @@ public class Security {
         }
         return matchResult;
     }
+
+    public void updateMarketPrice(int newPrice) { this.marketPrice = newPrice; }
 }
