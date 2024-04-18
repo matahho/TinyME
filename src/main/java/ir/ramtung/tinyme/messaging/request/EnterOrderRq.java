@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import ir.ramtung.tinyme.domain.entity.Order;
 import ir.ramtung.tinyme.domain.entity.Side;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -60,6 +61,21 @@ public class EnterOrderRq {
         this.minimumExecutionQuantity = minimumExecutionQuantity;
         this.stopPrice = stopPrice;
     }
+    public EnterOrderRq(OrderEntryType orderEntryType, Order order) {
+        this.requestType = orderEntryType;
+        this.securityIsin = order.getSecurity().getIsin();
+        this.orderId = order.getOrderId();
+        this.entryTime = order.getEntryTime();
+        this.side = order.getSide();
+        this.quantity = order.getQuantity();
+        this.price = order.getPrice();
+        this.brokerId = order.getBroker().getBrokerId();
+        this.shareholderId = order.getShareholder().getShareholderId();
+        this.minimumExecutionQuantity = 0;
+        this.stopPrice = 0;
+    }
+
+
     public static EnterOrderRq createNewOrderRq(long requestId, String securityIsin, long orderId, LocalDateTime entryTime, Side side, int quantity, int price, long brokerId, long shareholderId, int peakSize, int minimumExecutionQuantity) {
         return new EnterOrderRq(OrderEntryType.NEW_ORDER, requestId, securityIsin, orderId, entryTime, side, quantity, price, brokerId, shareholderId, peakSize, minimumExecutionQuantity);
     }
