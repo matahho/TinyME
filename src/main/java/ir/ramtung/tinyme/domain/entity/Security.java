@@ -5,9 +5,11 @@ import ir.ramtung.tinyme.messaging.request.DeleteOrderRq;
 import ir.ramtung.tinyme.messaging.request.EnterOrderRq;
 import ir.ramtung.tinyme.domain.service.Matcher;
 import ir.ramtung.tinyme.messaging.Message;
+import ir.ramtung.tinyme.messaging.request.OrderEntryType;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.LinkedList;
 import java.util.List;
 
 @Getter
@@ -21,23 +23,27 @@ public class Security {
     @Builder.Default
     private OrderBook orderBook = new OrderBook();
     @Builder.Default
-    private OrderBook inactiveOrderBook = new OrderBook();
+    private StopLimitOrderBook inactiveOrderBook = new StopLimitOrderBook();
     @Builder.Default
     private int marketPrice = 0;
 
     public MatchResult newOrder(EnterOrderRq enterOrderRq, Broker broker, Shareholder shareholder, Matcher matcher) {
+        //TODO : Here is a bug : if the seller does not have enough credit and want to save a stopLimitOrder . it will failed (Play with OrderStatus)
         if (enterOrderRq.getSide() == Side.SELL &&
-                !shareholder.hasEnoughPositionsOn(this,
-                orderBook.totalSellQuantityByShareholder(shareholder) + enterOrderRq.getQuantity()))
+                !shareholder.hasEnoughPositionsOn(this, orderBook.totalSellQuantityByShareholder(shareholder) + enterOrderRq.getQuantity())
+        )
             return MatchResult.notEnoughPositions();
+
         Order order;
         if (enterOrderRq.getPeakSize() == 0 && enterOrderRq.getStopPrice() == 0)
             order = new Order(enterOrderRq.getOrderId(), this, enterOrderRq.getSide(),
                     enterOrderRq.getQuantity(), enterOrderRq.getPrice(), broker, shareholder, enterOrderRq.getEntryTime(), OrderStatus.NEW, enterOrderRq.getMinimumExecutionQuantity());
-        else if ((enterOrderRq.getSide() == Side.SELL && enterOrderRq.getStopPrice() <= marketPrice)
-                    || (enterOrderRq.getSide() == Side.BUY && enterOrderRq.getStopPrice() >= marketPrice))
+
+        else if ((enterOrderRq.getSide() == Side.SELL && enterOrderRq.getStopPrice() <= this.marketPrice)
+                    || (enterOrderRq.getSide() == Side.BUY && enterOrderRq.getStopPrice() >= this.marketPrice))
             order = new Order(enterOrderRq.getOrderId(), this, enterOrderRq.getSide(),
                     enterOrderRq.getQuantity(), enterOrderRq.getPrice(), broker, shareholder, enterOrderRq.getEntryTime(), OrderStatus.NEW);
+
         else if ((enterOrderRq.getStopPrice() != 0)) {
             inactiveOrderBook.enqueue(new StopLimitOrder(enterOrderRq.getOrderId(), this, enterOrderRq.getSide(),
                     enterOrderRq.getQuantity(), enterOrderRq.getPrice(), broker, shareholder, enterOrderRq.getEntryTime(), enterOrderRq.getStopPrice()));
@@ -104,4 +110,17 @@ public class Security {
     }
 
     public void updateMarketPrice(int newPrice) { this.marketPrice = newPrice; }
+
+    public void EnterActivatedStopLimits(){
+        LinkedList<Order> activated = inactiveOrderBook.activatedStopLimits(this.marketPrice);
+        for (Order order :activated){
+
+            TRY TO GET BEAN
+
+            this.newOrder(new EnterOrderRq(OrderEntryType.NEW_ORDER, order), order.getBroker(), order.getShareholder(),new Matcher());
+        }
+
+    }
+
+
 }
