@@ -45,7 +45,9 @@ public class StopLimitOrder extends Order{
     }
 
 
-    public void activate() {this.markAsNew();}
+    public Order activate() {
+        return new Order(this.orderId, this.security, this.side, this.quantity, this.price, this.broker, this.shareholder);
+    }
 
     @Override //TODO : Furthur consideration required
     public void updateFromRequest(EnterOrderRq updateOrderRq) {
