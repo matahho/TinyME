@@ -49,6 +49,8 @@ public class Matcher {
             rollbackTrades(newOrder, trades);
             return MatchResult.notEnoughInitialExecution();
         }
+
+        updateSecurityMarkertPrice(newOrder.getSecurity(), trades);
         return MatchResult.executed(newOrder, trades);
     }
 
@@ -101,4 +103,8 @@ public class Matcher {
         return result;
     }
 
+    private void updateSecurityMarkertPrice(Security security, LinkedList<Trade> trades){
+        int lastTradePrice = trades.getLast().getPrice();
+        security.updateMarketPrice(lastTradePrice);
+    }
 }
