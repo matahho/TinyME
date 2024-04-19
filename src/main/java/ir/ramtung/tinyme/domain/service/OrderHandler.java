@@ -80,6 +80,7 @@ public class OrderHandler {
 
                 int securityMarketPrice = security.getMarketPrice();
                 LinkedList<Order> activated = security.getInactiveOrderBook().activatedStopLimits(securityMarketPrice);
+
                 for (Order order : activated)
                     handleEnterOrder(new EnterOrderRq(OrderEntryType.NEW_ORDER, order));
 
@@ -134,7 +135,7 @@ public class OrderHandler {
         if (enterOrderRq.getStopPrice() != 0 && enterOrderRq.getMinimumExecutionQuantity() != 0)
             errors.add(Message.STOP_LIMIT_ORDER_MEQ_NOT_ZERO);
         if (enterOrderRq.getStopPrice() != 0 && enterOrderRq.getPeakSize() != 0)
-            errors.add(Message.STOP_LIMIT_ORDER_MEQ_NOT_ZERO);
+            errors.add(Message.STOP_LIMIT_ORDER_PEAK_SIZE_NOT_ZERO);
         if (!errors.isEmpty())
             throw new InvalidRequestException(errors);
     }
