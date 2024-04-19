@@ -133,6 +133,8 @@ public class OrderHandler {
             errors.add(Message.STOP_PRICE_NOT_POSITIVE);
         if (enterOrderRq.getStopPrice() != 0 && enterOrderRq.getMinimumExecutionQuantity() != 0)
             errors.add(Message.STOP_LIMIT_ORDER_MEQ_NOT_ZERO);
+        if (enterOrderRq.getStopPrice() != 0 && enterOrderRq.getPeakSize() != 0)
+            errors.add(Message.STOP_LIMIT_ORDER_MEQ_NOT_ZERO);
         if (!errors.isEmpty())
             throw new InvalidRequestException(errors);
     }
