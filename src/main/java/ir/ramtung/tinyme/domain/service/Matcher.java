@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.LinkedList;
 import java.util.ListIterator;
+import java.util.NoSuchElementException;
 
 @Service
 public class Matcher {
@@ -104,7 +105,11 @@ public class Matcher {
     }
 
     private void updateSecurityMarkertPrice(Security security, LinkedList<Trade> trades){
-        int lastTradePrice = trades.getLast().getPrice();
-        security.updateMarketPrice(lastTradePrice);
+        if (!trades.isEmpty()) {
+            int lastTradePrice = trades.getLast().getPrice();
+            security.updateMarketPrice(lastTradePrice);
+        }
+
+
     }
 }
