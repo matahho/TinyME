@@ -111,16 +111,6 @@ public class Security {
 
     public void updateMarketPrice(int newPrice) { this.marketPrice = newPrice; }
 
-    public void EnterActivatedStopLimits(){
-        LinkedList<Order> activated = inactiveOrderBook.activatedStopLimits(this.marketPrice);
-        for (Order order :activated){
-
-            TRY TO GET BEAN
-
-            this.newOrder(new EnterOrderRq(OrderEntryType.NEW_ORDER, order), order.getBroker(), order.getShareholder(),new Matcher());
-        }
-
-    }
 
 
 }

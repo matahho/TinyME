@@ -18,6 +18,7 @@ public class StopLimitOrderBook extends OrderBook{
             StopLimitOrder stopLimitOrder = ((StopLimitOrder) order); // Cast Type
             if (stopLimitOrder.getStopPrice() >= marketPrice) {
                 Order activedOrder = stopLimitOrder.activate();
+                buyQueue.remove(activedOrder);
                 activatedStopLimits.push(activedOrder);
             }
         }
@@ -30,6 +31,7 @@ public class StopLimitOrderBook extends OrderBook{
             StopLimitOrder stopLimitOrder = ((StopLimitOrder) order); // Cast Type
             if (stopLimitOrder.getStopPrice() <= marketPrice) {
                 Order activedOrder = stopLimitOrder.activate();
+                sellQueue.remove(activedOrder);
                 activatedStopLimits.push(activedOrder);
             }
         }
