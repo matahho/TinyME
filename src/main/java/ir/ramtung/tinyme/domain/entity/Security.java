@@ -30,7 +30,7 @@ public class Security {
     public MatchResult newOrder(EnterOrderRq enterOrderRq, Broker broker, Shareholder shareholder, Matcher matcher) {
         //TODO : Here is a bug : if the seller does not have enough credit and want to save a stopLimitOrder . it will failed (Play with OrderStatus)
         if (enterOrderRq.getSide() == Side.SELL &&
-                !shareholder.hasEnoughPositionsOn(this, orderBook.totalSellQuantityByShareholder(shareholder) + enterOrderRq.getQuantity())
+                !shareholder.hasEnoughPositionsOn(this, orderBook.totalSellQuantityByShareholder(shareholder) + inactiveOrderBook.totalSellQuantityByShareholder(shareholder) + enterOrderRq.getQuantity())
         )
             return MatchResult.notEnoughPositions();
 
@@ -38,7 +38,9 @@ public class Security {
         if (enterOrderRq.getPeakSize() == 0 && enterOrderRq.getStopPrice() == 0)
             order = new Order(enterOrderRq.getOrderId(), this, enterOrderRq.getSide(),
                     enterOrderRq.getQuantity(), enterOrderRq.getPrice(), broker, shareholder, enterOrderRq.getEntryTime(), OrderStatus.NEW, enterOrderRq.getMinimumExecutionQuantity());
-
+        else if (enterOrderRq.getRequestType() == OrderEntryType.ACTIVATED_ORDER)
+            order = new Order(enterOrderRq.getOrderId(), this, enterOrderRq.getSide(),
+                    enterOrderRq.getQuantity(), enterOrderRq.getPrice(), broker, shareholder, enterOrderRq.getEntryTime(), OrderStatus.ACTIVATED);
         else if ((enterOrderRq.getSide() == Side.SELL && enterOrderRq.getStopPrice() <= this.marketPrice)
                     || (enterOrderRq.getSide() == Side.BUY && enterOrderRq.getStopPrice() >= this.marketPrice))
             order = new Order(enterOrderRq.getOrderId(), this, enterOrderRq.getSide(),
