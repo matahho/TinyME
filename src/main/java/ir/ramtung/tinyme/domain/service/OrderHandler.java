@@ -70,6 +70,12 @@ public class OrderHandler {
                 eventPublisher.publish(new OrderUpdatedEvent(enterOrderRq.getRequestId(), enterOrderRq.getOrderId()));
             if (!matchResult.trades().isEmpty()) {
                 eventPublisher.publish(new OrderExecutedEvent(enterOrderRq.getRequestId(), enterOrderRq.getOrderId(), matchResult.trades().stream().map(TradeDTO::new).collect(Collectors.toList())));
+
+                int securityMarketPrice = security.getMarketPrice();
+                LinkedList<Order> activated = security.getInactiveOrderBook().activatedStopLimits(securityMarketPrice);
+                for (Order order : activated)
+                    handleEnterOrder(new EnterOrderRq(OrderEntryType.NEW_ORDER, order));
+
             }
         } catch (InvalidRequestException ex) {
             eventPublisher.publish(new OrderRejectedEvent(enterOrderRq.getRequestId(), enterOrderRq.getOrderId(), ex.getReasons()));
