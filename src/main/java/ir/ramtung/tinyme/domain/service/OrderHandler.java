@@ -61,9 +61,13 @@ public class OrderHandler {
                 return;
             }
             if (matchResult.outcome() == MatchingOutcome.NOT_ENOUGH_MARKET_PRICE) {
-                if ((!broker.hasEnoughCredit((long) enterOrderRq.getQuantity() * enterOrderRq.getPrice()) && enterOrderRq.getSide() == Side.BUY)
-                    || (!shareholder.hasEnoughPositionsOn(security, enterOrderRq.getQuantity()) && enterOrderRq.getSide() == Side.SELL))
-                        security.getInactiveOrderBook().removeByOrderId(enterOrderRq.getSide(), enterOrderRq.getOrderId());
+                if ((!broker.hasEnoughCredit((long) enterOrderRq.getQuantity() * enterOrderRq.getPrice()) && enterOrderRq.getSide() == Side.BUY) || (!shareholder.hasEnoughPositionsOn(security, enterOrderRq.getQuantity()) && enterOrderRq.getSide() == Side.SELL)) {
+                    security.getInactiveOrderBook().removeByOrderId(enterOrderRq.getSide(), enterOrderRq.getOrderId());
+                    if(enterOrderRq.getSide() == Side.BUY)
+                        eventPublisher.publish(new OrderRejectedEvent(enterOrderRq.getRequestId(), enterOrderRq.getOrderId(), List.of(Message.BUYER_HAS_NOT_ENOUGH_CREDIT)));
+                    else
+                        eventPublisher.publish(new OrderRejectedEvent(enterOrderRq.getRequestId(), enterOrderRq.getOrderId(), List.of(Message.SELLER_HAS_NOT_ENOUGH_POSITIONS)));
+                }
                 else {
                     if (enterOrderRq.getSide() == Side.BUY)
                         broker.decreaseCreditBy((long) enterOrderRq.getQuantity() * enterOrderRq.getPrice());

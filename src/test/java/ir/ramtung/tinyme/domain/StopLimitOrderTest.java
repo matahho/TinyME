@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static ir.ramtung.tinyme.domain.entity.Side.BUY;
+import static ir.ramtung.tinyme.domain.entity.Side.SELL;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.verify;
 
@@ -148,6 +149,42 @@ public class StopLimitOrderTest {
 
     }
 
+    @Test
+    void securityExist_newStopLimitOrderArrive_rejectForNotEnoughCredit(){
+        Broker poorBroker = Broker.builder().brokerId(1).credit(100).build();
+        brokerRepository.addBroker(poorBroker);
+        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000, poorBroker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 16000);
+        orderHandler.handleEnterOrder(enterOrderRq);
+        assertThat(security.getInactiveOrderBook().getBuyQueue()).isEmpty();
+        assertThat(security.getOrderBook().getBuyQueue().size()).isEqualTo(5);
 
+        ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
+        verify(eventPublisher).publish(orderRejectedCaptor.capture());
+        OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
+        assertThat(outputEvent.getOrderId()).isEqualTo(11);
+        assertThat(outputEvent.getErrors()).containsOnly(
+                Message.BUYER_HAS_NOT_ENOUGH_CREDIT
+        );
 
+    }
+
+    @Test
+    void securityExist_newStopLimitOrderArrive_rejectForNotEnoughPositions(){
+        Shareholder poorShareholder = Shareholder.builder().shareholderId(2).build();
+        poorShareholder.incPosition(security, 50);
+        shareholderRepository.addShareholder(poorShareholder);
+        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(1, security.getIsin(), 11, LocalDateTime.now(), SELL, 100, 15000, broker.getBrokerId(), poorShareholder.getShareholderId(), 0, 0, 14000);
+        orderHandler.handleEnterOrder(enterOrderRq);
+        assertThat(security.getInactiveOrderBook().getBuyQueue()).isEmpty();
+        assertThat(security.getOrderBook().getBuyQueue().size()).isEqualTo(5);
+
+        ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
+        verify(eventPublisher).publish(orderRejectedCaptor.capture());
+        OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
+        assertThat(outputEvent.getOrderId()).isEqualTo(11);
+        assertThat(outputEvent.getErrors()).containsOnly(
+                Message.SELLER_HAS_NOT_ENOUGH_POSITIONS
+        );
+
+    }
 }
