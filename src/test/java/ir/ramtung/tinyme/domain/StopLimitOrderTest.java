@@ -150,6 +150,23 @@ public class StopLimitOrderTest {
     }
 
     @Test
+    void securityExist_invalidStopLimitWithWrongStopPriceValueArrived_publishErrorInMessageQueue() {
+        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, -1030);
+        orderHandler.handleEnterOrder(enterOrderRq);
+        assertThat(security.getInactiveOrderBook().getBuyQueue()).isEmpty();
+        assertThat(security.getOrderBook().getBuyQueue().size()).isEqualTo(5);
+
+        ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
+        verify(eventPublisher).publish(orderRejectedCaptor.capture());
+        OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
+        assertThat(outputEvent.getOrderId()).isEqualTo(11);
+        assertThat(outputEvent.getErrors()).containsOnly(
+                Message.STOP_PRICE_NOT_POSITIVE
+        );
+
+    }
+
+    @Test
     void securityExist_newStopLimitOrderArrive_rejectForNotEnoughCredit(){
         Broker poorBroker = Broker.builder().brokerId(1).credit(100).build();
         brokerRepository.addBroker(poorBroker);
