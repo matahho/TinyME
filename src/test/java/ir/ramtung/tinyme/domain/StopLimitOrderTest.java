@@ -114,6 +114,22 @@ public class StopLimitOrderTest {
 
     }
 
+    @Test
+    void securityExist_invalidStopLimitWithNonZeroPeakSizeArrive_publishErrorInMessageQueue(){
+        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000, broker.getBrokerId(), shareholder.getShareholderId(), 1, 0, 16000);
+        orderHandler.handleEnterOrder(enterOrderRq);
+        assertThat(security.getInactiveOrderBook().getBuyQueue()).isEmpty();
+        assertThat(security.getOrderBook().getBuyQueue().size()).isEqualTo(5);
+
+        ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
+        verify(eventPublisher).publish(orderRejectedCaptor.capture());
+        OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
+        assertThat(outputEvent.getOrderId()).isEqualTo(11);
+        assertThat(outputEvent.getErrors()).containsOnly(
+                Message.STOP_LIMIT_ORDER_PEAK_SIZE_NOT_ZERO
+        );
+
+    }
 
 
 
