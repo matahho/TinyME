@@ -71,11 +71,15 @@ public class Security {
     public MatchResult updateOrder(EnterOrderRq updateOrderRq, Matcher matcher) throws InvalidRequestException {
         Order order = orderBook.findByOrderId(updateOrderRq.getSide(), updateOrderRq.getOrderId());
         if (order == null)
+            order = inactiveOrderBook.findByOrderId(updateOrderRq.getSide(), updateOrderRq.getOrderId());
+        if (order == null)
             throw new InvalidRequestException(Message.ORDER_ID_NOT_FOUND);
         if ((order instanceof IcebergOrder) && updateOrderRq.getPeakSize() == 0)
             throw new InvalidRequestException(Message.INVALID_PEAK_SIZE);
         if (!(order instanceof IcebergOrder) && updateOrderRq.getPeakSize() != 0)
             throw new InvalidRequestException(Message.CANNOT_SPECIFY_PEAK_SIZE_FOR_A_NON_ICEBERG_ORDER);
+        if (!(order instanceof StopLimitOrder) && updateOrderRq.getStopPrice() != 0)
+            throw new InvalidRequestException(Message.CANNOT_SPECIFY_STOP_PRICE_FOR_A_NON_STOP_LIMIT_ORDER);
 
         if (updateOrderRq.getSide() == Side.SELL &&
                 !order.getShareholder().hasEnoughPositionsOn(this,
@@ -91,11 +95,25 @@ public class Security {
         }
         Order originalOrder = order.snapshot();
         order.updateFromRequest(updateOrderRq);
-        if (!losesPriority) {
+        if (!losesPriority && !(order instanceof StopLimitOrder)) {
             if (updateOrderRq.getSide() == Side.BUY) {
                 order.getBroker().decreaseCreditBy(order.getValue());
             }
             return MatchResult.executed(null, List.of());
+        }
+        else if (order instanceof StopLimitOrder stopLimitOrder){
+            if (stopLimitOrder.getSide() == Side.BUY && !stopLimitOrder.getBroker().hasEnoughCredit(stopLimitOrder.getValue()))
+                return MatchResult.notEnoughCredit();
+            if ((stopLimitOrder.getSide() == Side.SELL && stopLimitOrder.getStopPrice() <= this.marketPrice)
+                    || (stopLimitOrder.getSide() == Side.BUY && stopLimitOrder.getStopPrice() >= this.marketPrice)){
+                stopLimitOrder.getBroker().decreaseCreditBy(stopLimitOrder.getValue());
+                Order executableOrder = new Order(stopLimitOrder.getOrderId(), stopLimitOrder.getSecurity(), stopLimitOrder.getSide(), stopLimitOrder.getQuantity(), stopLimitOrder.getPrice(), stopLimitOrder.getBroker(), stopLimitOrder.getShareholder(), stopLimitOrder.getEntryTime(), OrderStatus.ACTIVATED);
+                return matcher.execute(executableOrder);
+            }
+            else {
+                inactiveOrderBook.enqueue(stopLimitOrder);
+                return MatchResult.notEnoughMarketPrice();
+            }
         }
         else
             order.markAsNew();
