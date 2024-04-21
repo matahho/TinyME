@@ -295,4 +295,33 @@ public class StopLimitOrderTest {
         );
     }
 
+    // a Trade active a StopLimit order and this StopLimit Will active another StopLimit (NESTED STOP LIMIT ACTIVATION)
+    @Test
+    void securityWithInactiveStopLimitExist_SomeOrderActiveAStopLimitOrder_thisActivedStopLimitWillActiveAnotherStopLimit(){
+        security.updateMarketPrice(1000);
+        EnterOrderRq inactiveOrderRq1 = EnterOrderRq.createNewOrderRq(1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10,
+                15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 100);
+        orderHandler.handleEnterOrder(inactiveOrderRq1);
+
+        EnterOrderRq inactiveOrderRq2 = EnterOrderRq.createNewOrderRq(2, security.getIsin(), 12, LocalDateTime.now(), BUY, 1085,
+                15810, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 15800);
+        orderHandler.handleEnterOrder(inactiveOrderRq2);
+
+        EnterOrderRq inactiveOrderRq3 = EnterOrderRq.createNewOrderRq(3, security.getIsin(), 13, LocalDateTime.now(), BUY, 340,
+                15800, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 15800);
+        orderHandler.handleEnterOrder(inactiveOrderRq3);
+
+        assertThat(security.getInactiveOrderBook().getBuyQueue().size()).isEqualTo(3);
+
+        EnterOrderRq regularOrderMarketPriceChanger = EnterOrderRq.createNewOrderRq(4, security.getIsin(), 14, LocalDateTime.now(), BUY, 10,
+                15900, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0);
+
+        orderHandler.handleEnterOrder(regularOrderMarketPriceChanger);
+        assertThat(security.getMarketPrice()).isEqualTo(regularOrderMarketPriceChanger.getPrice());
+
+        assertThat(security.getInactiveOrderBook().getBuyQueue().size()).isEqualTo(1);
+
+    }
+
+
 }
