@@ -117,6 +117,7 @@ public class Security {
             if ((stopLimitOrder.getSide() == Side.SELL && stopLimitOrder.getStopPrice() >= this.marketPrice)
                     || (stopLimitOrder.getSide() == Side.BUY && stopLimitOrder.getStopPrice() <= this.marketPrice)){
                 stopLimitOrder.getBroker().decreaseCreditBy(stopLimitOrder.getValue());
+                inactiveOrderBook.removeByOrderId(order.getSide(), order.getOrderId());
                 Order executableOrder = new Order(stopLimitOrder.getOrderId(), stopLimitOrder.getSecurity(), stopLimitOrder.getSide(), stopLimitOrder.getQuantity(), stopLimitOrder.getPrice(), stopLimitOrder.getBroker(), stopLimitOrder.getShareholder(), stopLimitOrder.getEntryTime(), OrderStatus.ACTIVATED);
                 return matcher.execute(executableOrder);
             }
