@@ -108,9 +108,12 @@ public class Security {
             }
             return MatchResult.executed(null, List.of());
         }
-        else if (order instanceof StopLimitOrder stopLimitOrder){
-            if (stopLimitOrder.getSide() == Side.BUY && !stopLimitOrder.getBroker().hasEnoughCredit(stopLimitOrder.getValue()))
+        else if (order instanceof StopLimitOrder stopLimitOrder) {
+            if (stopLimitOrder.getSide() == Side.BUY && !stopLimitOrder.getBroker().hasEnoughCredit(stopLimitOrder.getValue())){
+                inactiveOrderBook.removeByOrderId(order.getSide() ,order.getOrderId());
+                inactiveOrderBook.enqueue(originalOrder);
                 return MatchResult.notEnoughCredit();
+            }
             if ((stopLimitOrder.getSide() == Side.SELL && stopLimitOrder.getStopPrice() <= this.marketPrice)
                     || (stopLimitOrder.getSide() == Side.BUY && stopLimitOrder.getStopPrice() >= this.marketPrice)){
                 stopLimitOrder.getBroker().decreaseCreditBy(stopLimitOrder.getValue());

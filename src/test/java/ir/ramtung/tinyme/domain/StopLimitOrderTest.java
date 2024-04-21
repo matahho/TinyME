@@ -257,6 +257,8 @@ public class StopLimitOrderTest {
 
         orderHandler.handleEnterOrder(updateOrderRq);
 
+        assertThat(security.getInactiveOrderBook().findByOrderId(BUY, 12).getQuantity()).isEqualTo(10);
+
         ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
         verify(eventPublisher).publish(orderRejectedCaptor.capture());
         OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
@@ -280,6 +282,8 @@ public class StopLimitOrderTest {
         EnterOrderRq updateOrderRq = EnterOrderRq.createUpdateOrderRq(4, security.getIsin(), 12, LocalDateTime.now(), SELL, 100_000, 15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 16000);
 
         orderHandler.handleEnterOrder(updateOrderRq);
+
+        assertThat(security.getInactiveOrderBook().findByOrderId(SELL, 12).getQuantity()).isEqualTo(10);
 
         ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
         verify(eventPublisher).publish(orderRejectedCaptor.capture());
