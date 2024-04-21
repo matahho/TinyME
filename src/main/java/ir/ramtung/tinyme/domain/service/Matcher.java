@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.LinkedList;
 import java.util.ListIterator;
+import java.util.NoSuchElementException;
 
 @Service
 public class Matcher {
@@ -19,7 +20,7 @@ public class Matcher {
                 break;
 
             Trade trade = new Trade(newOrder.getSecurity(), matchingOrder.getPrice(), Math.min(newOrder.getQuantity(), matchingOrder.getQuantity()), newOrder, matchingOrder);
-            if (newOrder.getSide() == Side.BUY) {
+            if (newOrder.getSide() == Side.BUY && newOrder.getStatus() != OrderStatus.ACTIVATED) {
                 if (trade.buyerHasEnoughCredit())
                     trade.decreaseBuyersCredit();
                 else {
@@ -49,6 +50,8 @@ public class Matcher {
             rollbackTrades(newOrder, trades);
             return MatchResult.notEnoughInitialExecution();
         }
+
+        updateSecurityMarkertPrice(newOrder.getSecurity(), trades);
         return MatchResult.executed(newOrder, trades);
     }
 
@@ -101,4 +104,12 @@ public class Matcher {
         return result;
     }
 
+    private void updateSecurityMarkertPrice(Security security, LinkedList<Trade> trades){
+        if (!trades.isEmpty()) {
+            int lastTradePrice = trades.getLast().getPrice();
+            security.updateMarketPrice(lastTradePrice);
+        }
+
+
+    }
 }

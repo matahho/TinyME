@@ -43,7 +43,7 @@ public class OrderHandler {
             Shareholder shareholder = shareholderRepository.findShareholderById(enterOrderRq.getShareholderId());
 
             MatchResult matchResult;
-            if (enterOrderRq.getRequestType() == OrderEntryType.NEW_ORDER)
+            if (enterOrderRq.getRequestType() == OrderEntryType.NEW_ORDER || enterOrderRq.getRequestType() == OrderEntryType.ACTIVATED_ORDER)
                 matchResult = security.newOrder(enterOrderRq, broker, shareholder, matcher);
             else
                 matchResult = security.updateOrder(enterOrderRq, matcher);
@@ -60,12 +60,34 @@ public class OrderHandler {
                 eventPublisher.publish(new OrderRejectedEvent(enterOrderRq.getRequestId(), enterOrderRq.getOrderId(), List.of(Message.ORDER_FAILED_TO_REACH_MEQ)));
                 return;
             }
+            if (matchResult.outcome() == MatchingOutcome.NOT_ENOUGH_MARKET_PRICE) {
+                if ((!broker.hasEnoughCredit((long) enterOrderRq.getQuantity() * enterOrderRq.getPrice()) && enterOrderRq.getSide() == Side.BUY) || (!shareholder.hasEnoughPositionsOn(security, enterOrderRq.getQuantity()) && enterOrderRq.getSide() == Side.SELL)) {
+                    security.getInactiveOrderBook().removeByOrderId(enterOrderRq.getSide(), enterOrderRq.getOrderId());
+                    if(enterOrderRq.getSide() == Side.BUY)
+                        eventPublisher.publish(new OrderRejectedEvent(enterOrderRq.getRequestId(), enterOrderRq.getOrderId(), List.of(Message.BUYER_HAS_NOT_ENOUGH_CREDIT)));
+                    else
+                        eventPublisher.publish(new OrderRejectedEvent(enterOrderRq.getRequestId(), enterOrderRq.getOrderId(), List.of(Message.SELLER_HAS_NOT_ENOUGH_POSITIONS)));
+                }
+                else {
+                    if (enterOrderRq.getSide() == Side.BUY)
+                        broker.decreaseCreditBy((long) enterOrderRq.getQuantity() * enterOrderRq.getPrice());
+                    eventPublisher.publish(new OrderAcceptedEvent(enterOrderRq.getRequestId(), enterOrderRq.getOrderId()));
+                }
+                return;
+            }
             if (enterOrderRq.getRequestType() == OrderEntryType.NEW_ORDER)
                 eventPublisher.publish(new OrderAcceptedEvent(enterOrderRq.getRequestId(), enterOrderRq.getOrderId()));
             else
                 eventPublisher.publish(new OrderUpdatedEvent(enterOrderRq.getRequestId(), enterOrderRq.getOrderId()));
             if (!matchResult.trades().isEmpty()) {
                 eventPublisher.publish(new OrderExecutedEvent(enterOrderRq.getRequestId(), enterOrderRq.getOrderId(), matchResult.trades().stream().map(TradeDTO::new).collect(Collectors.toList())));
+
+                int securityMarketPrice = security.getMarketPrice();
+                LinkedList<Order> activated = security.getInactiveOrderBook().activatedStopLimits(securityMarketPrice);
+
+                for (Order order : activated)
+                    handleEnterOrder(new EnterOrderRq(OrderEntryType.NEW_ORDER, order));
+
             }
         } catch (InvalidRequestException ex) {
             eventPublisher.publish(new OrderRejectedEvent(enterOrderRq.getRequestId(), enterOrderRq.getOrderId(), ex.getReasons()));
@@ -112,6 +134,12 @@ public class OrderHandler {
             errors.add(Message.ORDER_MEQ_IS_BIGGER_THAN_QUANTITY);
         if (enterOrderRq.getRequestType() == OrderEntryType.UPDATE_ORDER && enterOrderRq.getMinimumExecutionQuantity() > 0)
             errors.add(Message.ORDER_UPDATE_MEQ_NOT_ZERO);
+        if (enterOrderRq.getStopPrice() < 0)
+            errors.add(Message.STOP_PRICE_NOT_POSITIVE);
+        if (enterOrderRq.getStopPrice() != 0 && enterOrderRq.getMinimumExecutionQuantity() != 0)
+            errors.add(Message.STOP_LIMIT_ORDER_MEQ_NOT_ZERO);
+        if (enterOrderRq.getStopPrice() != 0 && enterOrderRq.getPeakSize() != 0)
+            errors.add(Message.STOP_LIMIT_ORDER_PEAK_SIZE_NOT_ZERO);
         if (!errors.isEmpty())
             throw new InvalidRequestException(errors);
     }
