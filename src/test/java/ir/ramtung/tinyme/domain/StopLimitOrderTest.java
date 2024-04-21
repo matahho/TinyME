@@ -204,4 +204,13 @@ public class StopLimitOrderTest {
         );
 
     }
+
+    @Test
+    void securityExistWIthNonEmptyOrderBook_aStopLimitArrivedWithLowerStopPriceThanMarketPrice_instantlyStopLimitActived(){
+        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 21000);
+        orderHandler.handleEnterOrder(enterOrderRq);
+        assertThat(security.getInactiveOrderBook().getBuyQueue()).isEmpty();
+        assertThat(security.getOrderBook().getBuyQueue().size()).isEqualTo(6);
+
+    }
 }
