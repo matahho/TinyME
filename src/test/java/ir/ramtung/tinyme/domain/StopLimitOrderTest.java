@@ -8,8 +8,10 @@ import ir.ramtung.tinyme.messaging.EventPublisher;
 import ir.ramtung.tinyme.messaging.Message;
 import ir.ramtung.tinyme.messaging.TradeDTO;
 import ir.ramtung.tinyme.messaging.event.OrderAcceptedEvent;
+import ir.ramtung.tinyme.messaging.event.OrderDeletedEvent;
 import ir.ramtung.tinyme.messaging.event.OrderExecutedEvent;
 import ir.ramtung.tinyme.messaging.event.OrderRejectedEvent;
+import ir.ramtung.tinyme.messaging.request.DeleteOrderRq;
 import ir.ramtung.tinyme.messaging.request.EnterOrderRq;
 import ir.ramtung.tinyme.repository.BrokerRepository;
 import ir.ramtung.tinyme.repository.SecurityRepository;
@@ -350,6 +352,30 @@ public class StopLimitOrderTest {
         // Then
         assertThat(security.getInactiveOrderBook().findByOrderId(BUY, 12)).isNull();
         assertThat(security.getOrderBook().findByOrderId(BUY, 12)).isNotNull();
+    }
+
+    @Test
+    void anInactiveOrderExist_deleteInactiveOrderRequestArrived_inactiveOrderBookMustBedeleted(){
+        security.updateMarketPrice(1000);
+        EnterOrderRq inactiveOrderRq1 = EnterOrderRq.createNewOrderRq(1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10,
+                15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 15000);
+        orderHandler.handleEnterOrder(inactiveOrderRq1);
+
+        assertThat(security.getInactiveOrderBook().getBuyQueue().size()).isEqualTo(1);
+
+        DeleteOrderRq deleteOrderRq = new DeleteOrderRq(2, security.getIsin(), BUY, 11);
+        orderHandler.handleDeleteOrder(deleteOrderRq);
+        assertThat(security.getInactiveOrderBook().getBuyQueue().size()).isEqualTo(0);
+
+
+        ArgumentCaptor<OrderDeletedEvent> orderDeletedEventCaptor = ArgumentCaptor.forClass(OrderDeletedEvent.class);
+        verify(eventPublisher).publish(orderDeletedEventCaptor.capture());
+        OrderDeletedEvent outputEvent = orderDeletedEventCaptor.getValue();
+
+        assertThat(outputEvent.getOrderId()).isEqualTo(11);
+        assertThat(outputEvent.getRequestId()).isEqualTo(2);
+
+
     }
 
 }
