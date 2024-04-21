@@ -213,4 +213,32 @@ public class StopLimitOrderTest {
         assertThat(security.getOrderBook().getBuyQueue().size()).isEqualTo(6);
 
     }
+
+    @Test
+    void givenOrdersWithSamePrice_whenActivatedBasedOnEntryTime_thenOrdersAreProcessedAccordingToEntryTime(){
+
+        EnterOrderRq stopLimitOrder1 = EnterOrderRq.createNewOrderRq(
+                1, security.getIsin(), 13, LocalDateTime.now(), BUY, 10, 15000,
+                broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 16000);
+
+        EnterOrderRq stopLimitOrder2 = EnterOrderRq.createNewOrderRq(
+                2, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000,
+                broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 16000);
+
+        EnterOrderRq stopLimitOrder3 = EnterOrderRq.createNewOrderRq(
+                3, security.getIsin(), 12, LocalDateTime.now(), BUY, 10, 15000,
+                broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 16000);
+        orderHandler.handleEnterOrder(stopLimitOrder1);
+        orderHandler.handleEnterOrder(stopLimitOrder2);
+        orderHandler.handleEnterOrder(stopLimitOrder3);
+
+
+        // Then
+        assertThat(security.getInactiveOrderBook().getBuyQueue().size()).isEqualTo(3);
+        assertThat(security.getInactiveOrderBook().getBuyQueue().getFirst().getOrderId()).isEqualTo(12);
+        assertThat(security.getInactiveOrderBook().getBuyQueue().getLast().getOrderId()).isEqualTo(13);
+
+
+    }
+
 }
