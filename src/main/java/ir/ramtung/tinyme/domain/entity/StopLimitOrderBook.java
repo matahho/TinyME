@@ -14,26 +14,35 @@ public class StopLimitOrderBook extends OrderBook{
     private LinkedList<Order> ActivatePossibleStopLimitsInBuyQueue(int marketPrice) {
         LinkedList<Order> activatedStopLimits = new LinkedList<>();
         LinkedList<Order> buyQueue = getBuyQueue();
+        LinkedList<Order> ordersToRemove = new LinkedList<>();
         for (Order order : buyQueue) {
             StopLimitOrder stopLimitOrder = ((StopLimitOrder) order); // Cast Type
             if (stopLimitOrder.getStopPrice() <= marketPrice) {
                 Order activedOrder = stopLimitOrder.activate();
-                removeByOrderId(Side.BUY, activedOrder.orderId);
+                ordersToRemove.add(activedOrder);
                 activatedStopLimits.push(activedOrder);
             }
+        }
+
+        for (Order order : ordersToRemove) {
+            removeByOrderId(Side.BUY, order.getOrderId());
         }
         return activatedStopLimits;
     }
     private LinkedList<Order> ActivatePossibleStopLimitsInSellQueue(int marketPrice) {
         LinkedList<Order> activatedStopLimits = new LinkedList<>();
         LinkedList<Order> sellQueue = getSellQueue();
+        LinkedList<Order> ordersToRemove = new LinkedList<>();
         for (Order order : sellQueue) {
             StopLimitOrder stopLimitOrder = ((StopLimitOrder) order); // Cast Type
             if (stopLimitOrder.getStopPrice() >= marketPrice) {
                 Order activedOrder = stopLimitOrder.activate();
-                removeByOrderId(Side.SELL, activedOrder.orderId);
+                ordersToRemove.add(activedOrder);
                 activatedStopLimits.push(activedOrder);
             }
+        }
+        for (Order order : ordersToRemove) {
+            removeByOrderId(Side.SELL, order.getOrderId());
         }
         return activatedStopLimits;
     }
