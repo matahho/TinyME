@@ -300,16 +300,21 @@ public class StopLimitOrderTest {
     void securityWithInactiveStopLimitExist_SomeOrderActiveAStopLimitOrder_thisActivedStopLimitWillActiveAnotherStopLimit(){
         security.updateMarketPrice(1000);
         EnterOrderRq inactiveOrderRq1 = EnterOrderRq.createNewOrderRq(1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10,
-                15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 100);
+                15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 15000);
         orderHandler.handleEnterOrder(inactiveOrderRq1);
+        broker.increaseCreditBy(1000_000_000);
 
         EnterOrderRq inactiveOrderRq2 = EnterOrderRq.createNewOrderRq(2, security.getIsin(), 12, LocalDateTime.now(), BUY, 1085,
                 15810, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 15800);
         orderHandler.handleEnterOrder(inactiveOrderRq2);
+        broker.increaseCreditBy(1000_000_000);
+
 
         EnterOrderRq inactiveOrderRq3 = EnterOrderRq.createNewOrderRq(3, security.getIsin(), 13, LocalDateTime.now(), BUY, 340,
                 15800, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 15800);
         orderHandler.handleEnterOrder(inactiveOrderRq3);
+        broker.increaseCreditBy(1000_000_000);
+
 
         assertThat(security.getInactiveOrderBook().getBuyQueue().size()).isEqualTo(3);
 
