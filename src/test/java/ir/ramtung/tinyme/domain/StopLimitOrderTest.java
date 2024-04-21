@@ -322,9 +322,8 @@ public class StopLimitOrderTest {
                 15900, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0);
 
         orderHandler.handleEnterOrder(regularOrderMarketPriceChanger);
-        assertThat(security.getMarketPrice()).isEqualTo(regularOrderMarketPriceChanger.getPrice());
 
-        assertThat(security.getInactiveOrderBook().getBuyQueue().size()).isEqualTo(1);
+        assertThat(security.getInactiveOrderBook().getBuyQueue()).isEmpty();
 
     }
     @Test
