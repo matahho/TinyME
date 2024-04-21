@@ -322,6 +322,30 @@ public class StopLimitOrderTest {
         assertThat(security.getInactiveOrderBook().getBuyQueue().size()).isEqualTo(1);
 
     }
+    @Test
+    void givenInactiveStopLimitOrders_whenUpdateInactiveOrderToActiveOrder_thenOrderBecomesActive() {
+        // Given
 
+        security.updateMarketPrice(15000);
+
+        List<StopLimitOrder> stopLimitOrders = Arrays.asList(
+                new StopLimitOrder(11, security, BUY, 10, 15000, broker, shareholder, LocalDateTime.now(), OrderStatus.INACTIVE, 16000),
+                new StopLimitOrder(12, security, BUY, 10, 15000, broker, shareholder, LocalDateTime.now(), OrderStatus.INACTIVE, 16000),
+                new StopLimitOrder(13, security, BUY, 10, 15000, broker, shareholder, LocalDateTime.now(), OrderStatus.INACTIVE, 16000)
+        );
+
+
+        stopLimitOrders.forEach(order -> security.getInactiveOrderBook().enqueue(order));
+
+        // When
+        EnterOrderRq updateOrderRq = EnterOrderRq.createUpdateOrderRq(
+                4, security.getIsin(), 12, LocalDateTime.now(), BUY, 15, 15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 14500);
+
+        orderHandler.handleEnterOrder(updateOrderRq);
+
+        // Then
+        assertThat(security.getInactiveOrderBook().findByOrderId(BUY, 12)).isNull();
+        assertThat(security.getOrderBook().findByOrderId(BUY, 12)).isNotNull();
+    }
 
 }
