@@ -16,7 +16,7 @@ public class StopLimitOrderBook extends OrderBook{
         LinkedList<Order> buyQueue = getBuyQueue();
         for (Order order : buyQueue) {
             StopLimitOrder stopLimitOrder = ((StopLimitOrder) order); // Cast Type
-            if (stopLimitOrder.getStopPrice() >= marketPrice) {
+            if (stopLimitOrder.getStopPrice() <= marketPrice) {
                 Order activedOrder = stopLimitOrder.activate();
                 removeByOrderId(Side.BUY, activedOrder.orderId);
                 activatedStopLimits.push(activedOrder);
@@ -29,7 +29,7 @@ public class StopLimitOrderBook extends OrderBook{
         LinkedList<Order> sellQueue = getSellQueue();
         for (Order order : sellQueue) {
             StopLimitOrder stopLimitOrder = ((StopLimitOrder) order); // Cast Type
-            if (stopLimitOrder.getStopPrice() <= marketPrice) {
+            if (stopLimitOrder.getStopPrice() >= marketPrice) {
                 Order activedOrder = stopLimitOrder.activate();
                 removeByOrderId(Side.SELL, activedOrder.orderId);
                 activatedStopLimits.push(activedOrder);

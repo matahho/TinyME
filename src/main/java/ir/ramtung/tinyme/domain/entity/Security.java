@@ -41,8 +41,8 @@ public class Security {
         else if (enterOrderRq.getRequestType() == OrderEntryType.ACTIVATED_ORDER)
             order = new Order(enterOrderRq.getOrderId(), this, enterOrderRq.getSide(),
                     enterOrderRq.getQuantity(), enterOrderRq.getPrice(), broker, shareholder, enterOrderRq.getEntryTime(), OrderStatus.ACTIVATED);
-        else if ((enterOrderRq.getSide() == Side.SELL && enterOrderRq.getStopPrice() <= this.marketPrice)
-                    || (enterOrderRq.getSide() == Side.BUY && enterOrderRq.getStopPrice() >= this.marketPrice))
+        else if ((enterOrderRq.getSide() == Side.SELL && enterOrderRq.getStopPrice() >= this.marketPrice)
+                    || (enterOrderRq.getSide() == Side.BUY && enterOrderRq.getStopPrice() <= this.marketPrice))
             order = new Order(enterOrderRq.getOrderId(), this, enterOrderRq.getSide(),
                     enterOrderRq.getQuantity(), enterOrderRq.getPrice(), broker, shareholder, enterOrderRq.getEntryTime(), OrderStatus.NEW);
 
@@ -114,8 +114,8 @@ public class Security {
                 inactiveOrderBook.enqueue(originalOrder);
                 return MatchResult.notEnoughCredit();
             }
-            if ((stopLimitOrder.getSide() == Side.SELL && stopLimitOrder.getStopPrice() <= this.marketPrice)
-                    || (stopLimitOrder.getSide() == Side.BUY && stopLimitOrder.getStopPrice() >= this.marketPrice)){
+            if ((stopLimitOrder.getSide() == Side.SELL && stopLimitOrder.getStopPrice() >= this.marketPrice)
+                    || (stopLimitOrder.getSide() == Side.BUY && stopLimitOrder.getStopPrice() <= this.marketPrice)){
                 stopLimitOrder.getBroker().decreaseCreditBy(stopLimitOrder.getValue());
                 Order executableOrder = new Order(stopLimitOrder.getOrderId(), stopLimitOrder.getSecurity(), stopLimitOrder.getSide(), stopLimitOrder.getQuantity(), stopLimitOrder.getPrice(), stopLimitOrder.getBroker(), stopLimitOrder.getShareholder(), stopLimitOrder.getEntryTime(), OrderStatus.ACTIVATED);
                 return matcher.execute(executableOrder);

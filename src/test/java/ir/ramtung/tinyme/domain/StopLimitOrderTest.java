@@ -88,8 +88,8 @@ public class StopLimitOrderTest {
 
     // (Given - When - Then) pattern
     @Test
-    void securityWithNonEmptyOrderBook_aStopLimitOrderArrivedWithLowerStopPriceThanMarket_itGoesToInactiveOrderBook(){
-
+    void securityWithNonEmptyOrderBook_aStopLimitOrderArrivedWithHigherStopPriceThanMarket_itGoesToInactiveOrderBook(){
+        security.updateMarketPrice(15000);
         EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 16000);
         orderHandler.handleEnterOrder(enterOrderRq);
         assertThat(security.getInactiveOrderBook().getBuyQueue().size()).isEqualTo(1);
@@ -99,6 +99,7 @@ public class StopLimitOrderTest {
 
     @Test
     void securityWithInactiveStopLimitOrder_newTradeCauseToChangeMarketPrice_activeStopLimitAndQueued(){
+        security.updateMarketPrice(15000);
         // Stop Limit Order Arrived
         EnterOrderRq stopLimitOrderRq = EnterOrderRq.createNewOrderRq(1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 15800);
         orderHandler.handleEnterOrder(stopLimitOrderRq);
@@ -208,7 +209,7 @@ public class StopLimitOrderTest {
 
     @Test
     void securityExistWIthNonEmptyOrderBook_aStopLimitArrivedWithLowerStopPriceThanMarketPrice_instantlyStopLimitActived(){
-        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 21000);
+        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 19000);
         orderHandler.handleEnterOrder(enterOrderRq);
         assertThat(security.getInactiveOrderBook().getBuyQueue()).isEmpty();
         assertThat(security.getOrderBook().getBuyQueue().size()).isEqualTo(6);
@@ -217,7 +218,7 @@ public class StopLimitOrderTest {
 
     @Test
     void givenOrdersWithSamePrice_whenActivatedBasedOnEntryTime_thenOrdersAreProcessedAccordingToEntryTime(){
-
+        security.updateMarketPrice(14000);
         EnterOrderRq stopLimitOrder1 = EnterOrderRq.createNewOrderRq(
                 1, security.getIsin(), 13, LocalDateTime.now(), BUY, 10, 15000,
                 broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 16000);
