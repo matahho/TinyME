@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -235,8 +236,8 @@ public class StopLimitOrderTest {
 
         // Then
         assertThat(security.getInactiveOrderBook().getBuyQueue().size()).isEqualTo(3);
-        assertThat(security.getInactiveOrderBook().getBuyQueue().getFirst().getOrderId()).isEqualTo(12);
-        assertThat(security.getInactiveOrderBook().getBuyQueue().getLast().getOrderId()).isEqualTo(13);
+        assertThat(security.getInactiveOrderBook().getBuyQueue().getFirst().getOrderId()).isEqualTo(13);
+        assertThat(security.getInactiveOrderBook().getBuyQueue().getLast().getOrderId()).isEqualTo(12);
 
 
     }
