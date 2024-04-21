@@ -242,4 +242,52 @@ public class StopLimitOrderTest {
 
     }
 
+    @Test
+    void someInactiveStopLimitOrderExist_updateStopLimitOrderRequestArrive_FailToUpdateNotEnoughCredit(){
+
+        List<StopLimitOrder> stopLimitOrders = Arrays.asList(
+                new StopLimitOrder(11, security, BUY, 10, 15000, broker, shareholder, LocalDateTime.now(), OrderStatus.INACTIVE, 16000),
+                new StopLimitOrder(12, security, BUY, 10, 15000, broker, shareholder, LocalDateTime.now(), OrderStatus.INACTIVE, 16000),
+                new StopLimitOrder(13, security, BUY, 10, 15000, broker, shareholder, LocalDateTime.now(), OrderStatus.INACTIVE, 16000)
+        );
+
+        stopLimitOrders.forEach(order -> security.getInactiveOrderBook().enqueue(order));
+
+        EnterOrderRq updateOrderRq = EnterOrderRq.createUpdateOrderRq(4, security.getIsin(), 12, LocalDateTime.now(), BUY, 100, 15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 16000);
+
+        orderHandler.handleEnterOrder(updateOrderRq);
+
+        ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
+        verify(eventPublisher).publish(orderRejectedCaptor.capture());
+        OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
+        assertThat(outputEvent.getRequestId()).isEqualTo(4);
+        assertThat(outputEvent.getErrors()).containsOnly(
+                Message.BUYER_HAS_NOT_ENOUGH_CREDIT
+        );
+    }
+
+    @Test
+    void someInactiveStopLimitOrderExist_updateStopLimitOrderRequestArrive_FailToUpdateNotEnoughPositions(){
+
+        List<StopLimitOrder> stopLimitOrders = Arrays.asList(
+                new StopLimitOrder(11, security, SELL, 10, 15000, broker, shareholder, LocalDateTime.now(), OrderStatus.INACTIVE, 16000),
+                new StopLimitOrder(12, security, SELL, 10, 15000, broker, shareholder, LocalDateTime.now(), OrderStatus.INACTIVE, 16000),
+                new StopLimitOrder(13, security, SELL, 10, 15000, broker, shareholder, LocalDateTime.now(), OrderStatus.INACTIVE, 16000)
+        );
+
+        stopLimitOrders.forEach(order -> security.getInactiveOrderBook().enqueue(order));
+
+        EnterOrderRq updateOrderRq = EnterOrderRq.createUpdateOrderRq(4, security.getIsin(), 12, LocalDateTime.now(), SELL, 100_000, 15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 16000);
+
+        orderHandler.handleEnterOrder(updateOrderRq);
+
+        ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
+        verify(eventPublisher).publish(orderRejectedCaptor.capture());
+        OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
+        assertThat(outputEvent.getRequestId()).isEqualTo(4);
+        assertThat(outputEvent.getErrors()).containsOnly(
+                Message.SELLER_HAS_NOT_ENOUGH_POSITIONS
+        );
+    }
+
 }

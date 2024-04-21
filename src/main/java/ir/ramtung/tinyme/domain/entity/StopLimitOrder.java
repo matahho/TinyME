@@ -37,11 +37,6 @@ public class StopLimitOrder extends Order{
 
     @Override
     public boolean queuesBefore(Order order) {
-//        if (order.getSide() == Side.BUY) {
-//            return stopPrice > order.getPrice();
-//        } else {
-//            return stopPrice < order.getPrice();
-//        }
         return entryTime.isBefore(order.getEntryTime());
     }
 
