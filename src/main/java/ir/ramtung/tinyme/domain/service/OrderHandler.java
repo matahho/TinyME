@@ -68,6 +68,7 @@ public class OrderHandler {
                     else
                         eventPublisher.publish(new OrderRejectedEvent(enterOrderRq.getRequestId(), enterOrderRq.getOrderId(), List.of(Message.SELLER_HAS_NOT_ENOUGH_POSITIONS)));
                 }
+
                 else {
                     if (enterOrderRq.getSide() == Side.BUY)
                         broker.decreaseCreditBy((long) enterOrderRq.getQuantity() * enterOrderRq.getPrice());
