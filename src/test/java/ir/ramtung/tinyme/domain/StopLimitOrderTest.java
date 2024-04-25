@@ -413,4 +413,28 @@ public class StopLimitOrderTest {
         );
     }
 
+    @Test
+    void anInactivateOrderHaveBeenActivated_updateRQOnItsStopLimitArrived_rejectRequest(){
+        security.updateMarketPrice(18000);
+        broker.increaseCreditBy(999_999_999);
+        EnterOrderRq newStopLimitOrder = EnterOrderRq.createUpdateOrderRq(11, security.getIsin(), 11, LocalDateTime.now(), BUY, 43, 323044, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 15000);
+        orderHandler.handleEnterOrder(newStopLimitOrder);
+
+        assertThat(security.getInactiveOrderBook().getBuyQueue()).isEmpty();
+        assertThat(security.getOrderBook().getBuyQueue().size()).isEqualTo(6);
+
+        EnterOrderRq updateOrderRq = EnterOrderRq.createUpdateOrderRq(12, security.getIsin(), 11, LocalDateTime.now(), BUY, 43, 323044, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 19000);
+        orderHandler.handleEnterOrder(updateOrderRq);
+
+
+        ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
+        verify(eventPublisher).publish(orderRejectedCaptor.capture());
+        OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
+        assertThat(outputEvent.getRequestId()).isEqualTo(12);
+        assertThat(outputEvent.getErrors()).containsOnly(
+                Message.CANNOT_SPECIFY_STOP_PRICE_FOR_A_NON_STOP_LIMIT_ORDER
+        );
+
+    }
+
 }
