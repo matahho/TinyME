@@ -377,5 +377,39 @@ public class StopLimitOrderTest {
 
 
     }
+    @Test
+    void brokerWithZeroCreditExist_AnInactiveOrderArrive_itMustBeRejected(){
+        broker.decreaseCreditBy(broker.getCredit());
+        assertThat(broker.getCredit()).isEqualTo(0);
+        security.updateMarketPrice(15000);
+        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 16000);
+        orderHandler.handleEnterOrder(enterOrderRq);
+        assertThat(security.getInactiveOrderBook().getBuyQueue()).isEmpty();
+
+
+        ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
+        verify(eventPublisher).publish(orderRejectedCaptor.capture());
+        OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
+        assertThat(outputEvent.getRequestId()).isEqualTo(1);
+        assertThat(outputEvent.getErrors()).containsOnly(
+                Message.BUYER_HAS_NOT_ENOUGH_CREDIT
+        );
+
+    }
+
+    @Test
+    void someOrdersAreExitsInOrderBook_changeOrderStopPriceRQArrived_errorCannotChangeOrderToInactiveOrder(){
+        EnterOrderRq updateOrder = EnterOrderRq.createUpdateOrderRq(11, security.getIsin(), 2, LocalDateTime.now(), BUY, 43, 323044, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 100);
+        orderHandler.handleEnterOrder(updateOrder);
+
+        ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
+        verify(eventPublisher).publish(orderRejectedCaptor.capture());
+        OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
+        assertThat(outputEvent.getRequestId()).isEqualTo(11);
+        assertThat(outputEvent.getErrors()).containsOnly(
+                Message.CANNOT_SPECIFY_STOP_PRICE_FOR_A_NON_STOP_LIMIT_ORDER
+        );
+    }
+
 
 }
