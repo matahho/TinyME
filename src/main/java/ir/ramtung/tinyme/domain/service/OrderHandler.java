@@ -129,18 +129,10 @@ public class OrderHandler {
             errors.add(Message.UNKNOWN_SHAREHOLDER_ID);
         if (enterOrderRq.getPeakSize() < 0 || enterOrderRq.getPeakSize() >= enterOrderRq.getQuantity())
             errors.add(Message.INVALID_PEAK_SIZE);
-        if (enterOrderRq.getMinimumExecutionQuantity() < 0)
-            errors.add(Message.ORDER_MEQ_IS_NOT_POSITIVE);
-        if (enterOrderRq.getMinimumExecutionQuantity() > enterOrderRq.getQuantity())
-            errors.add(Message.ORDER_MEQ_IS_BIGGER_THAN_QUANTITY);
-        if (enterOrderRq.getRequestType() == OrderEntryType.UPDATE_ORDER && enterOrderRq.getMinimumExecutionQuantity() > 0)
-            errors.add(Message.ORDER_UPDATE_MEQ_NOT_ZERO);
-        if (enterOrderRq.getStopPrice() < 0)
-            errors.add(Message.STOP_PRICE_NOT_POSITIVE);
-        if (enterOrderRq.getStopPrice() != 0 && enterOrderRq.getMinimumExecutionQuantity() != 0)
-            errors.add(Message.STOP_LIMIT_ORDER_MEQ_NOT_ZERO);
-        if (enterOrderRq.getStopPrice() != 0 && enterOrderRq.getPeakSize() != 0)
-            errors.add(Message.STOP_LIMIT_ORDER_PEAK_SIZE_NOT_ZERO);
+
+        validateMEQField(enterOrderRq, errors);
+        validateStopLimitOrder(enterOrderRq, errors);
+
         if (!errors.isEmpty())
             throw new InvalidRequestException(errors);
     }
@@ -154,4 +146,22 @@ public class OrderHandler {
         if (!errors.isEmpty())
             throw new InvalidRequestException(errors);
     }
+
+    private void validateStopLimitOrder(EnterOrderRq enterOrderRq , List<String> errors){
+        if (enterOrderRq.getStopPrice() < 0)
+            errors.add(Message.STOP_PRICE_NOT_POSITIVE);
+        if (enterOrderRq.getStopPrice() != 0 && enterOrderRq.getMinimumExecutionQuantity() != 0)
+            errors.add(Message.STOP_LIMIT_ORDER_MEQ_NOT_ZERO);
+        if (enterOrderRq.getStopPrice() != 0 && enterOrderRq.getPeakSize() != 0)
+            errors.add(Message.STOP_LIMIT_ORDER_PEAK_SIZE_NOT_ZERO);
+    }
+    private void validateMEQField(EnterOrderRq enterOrderRq, List<String> errors){
+        if (enterOrderRq.getMinimumExecutionQuantity() < 0)
+            errors.add(Message.ORDER_MEQ_IS_NOT_POSITIVE);
+        if (enterOrderRq.getMinimumExecutionQuantity() > enterOrderRq.getQuantity())
+            errors.add(Message.ORDER_MEQ_IS_BIGGER_THAN_QUANTITY);
+        if (enterOrderRq.getRequestType() == OrderEntryType.UPDATE_ORDER && enterOrderRq.getMinimumExecutionQuantity() > 0)
+            errors.add(Message.ORDER_UPDATE_MEQ_NOT_ZERO);
+    }
+
 }
