@@ -45,7 +45,7 @@ public class StopLimitOrder extends Order{
         return new Order(this.orderId, this.security, this.side, this.quantity, this.price, this.broker, this.shareholder);
     }
 
-    @Override //TODO : Furthur consideration required
+    @Override
     public void updateFromRequest(EnterOrderRq updateOrderRq) {
         super.updateFromRequest(updateOrderRq);
         stopPrice = updateOrderRq.getStopPrice();
