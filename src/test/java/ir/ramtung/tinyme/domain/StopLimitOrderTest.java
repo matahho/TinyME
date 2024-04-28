@@ -25,7 +25,9 @@ import org.springframework.context.annotation.Import;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 import static ir.ramtung.tinyme.domain.entity.Side.BUY;
@@ -92,7 +94,10 @@ public class StopLimitOrderTest {
     @Test
     void securityWithNonEmptyOrderBook_aStopLimitOrderArrivedWithHigherStopPriceThanMarket_itGoesToInactiveOrderBook(){
         security.updateMarketPrice(15000);
-        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 16000);
+        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(
+                1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000,
+                broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 16000);
+
         orderHandler.handleEnterOrder(enterOrderRq);
         assertThat(security.getInactiveOrderBook().getBuyQueue().size()).isEqualTo(1);
         verify(eventPublisher).publish(new OrderAcceptedEvent(1, 11));
@@ -103,12 +108,18 @@ public class StopLimitOrderTest {
     void securityWithInactiveStopLimitOrder_newTradeCauseToChangeMarketPrice_activeStopLimitAndQueued(){
         security.updateMarketPrice(15000);
         // Stop Limit Order Arrived
-        EnterOrderRq stopLimitOrderRq = EnterOrderRq.createNewOrderRq(1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 15800);
+        EnterOrderRq stopLimitOrderRq = EnterOrderRq.createNewOrderRq(
+                1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000,
+                broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 15800);
+
         orderHandler.handleEnterOrder(stopLimitOrderRq);
         assertThat(security.getInactiveOrderBook().getBuyQueue().size()).isEqualTo(1);
 
         // New Order Change The Market Price
-        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(2, security.getIsin(), 12, LocalDateTime.now(), BUY, 10, 15800, broker.getBrokerId(), shareholder.getShareholderId(), 0 , 0);
+        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(
+                2, security.getIsin(), 12, LocalDateTime.now(), BUY, 10, 15800,
+                broker.getBrokerId(), shareholder.getShareholderId(), 0 , 0);
+
         orderHandler.handleEnterOrder(enterOrderRq);
         assertThat(security.getMarketPrice()).isEqualTo(enterOrderRq.getPrice());
         assertThat(security.getInactiveOrderBook().getBuyQueue()).isEmpty();
@@ -121,7 +132,10 @@ public class StopLimitOrderTest {
 
     @Test
     void securityExist_invalidStopLimitWithNonZeroPeakSizeArrive_publishErrorInMessageQueue(){
-        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000, broker.getBrokerId(), shareholder.getShareholderId(), 1, 0, 16000);
+        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(
+                1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000,
+                broker.getBrokerId(), shareholder.getShareholderId(), 1, 0, 16000);
+
         orderHandler.handleEnterOrder(enterOrderRq);
         assertThat(security.getInactiveOrderBook().getBuyQueue()).isEmpty();
         assertThat(security.getOrderBook().getBuyQueue().size()).isEqualTo(5);
@@ -138,7 +152,10 @@ public class StopLimitOrderTest {
 
     @Test
     void securityExist_invalidStopLimitWithNonZeroMEQValueArrive_publishErrorInMessageQueue(){
-        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 10, 16000);
+        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(
+                1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000,
+                broker.getBrokerId(), shareholder.getShareholderId(), 0, 10, 16000);
+
         orderHandler.handleEnterOrder(enterOrderRq);
         assertThat(security.getInactiveOrderBook().getBuyQueue()).isEmpty();
         assertThat(security.getOrderBook().getBuyQueue().size()).isEqualTo(5);
@@ -155,7 +172,10 @@ public class StopLimitOrderTest {
 
     @Test
     void securityExist_invalidStopLimitWithWrongStopPriceValueArrived_publishErrorInMessageQueue() {
-        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, -1030);
+        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(
+                1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000,
+                broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, -1030);
+
         orderHandler.handleEnterOrder(enterOrderRq);
         assertThat(security.getInactiveOrderBook().getBuyQueue()).isEmpty();
         assertThat(security.getOrderBook().getBuyQueue().size()).isEqualTo(5);
@@ -174,7 +194,10 @@ public class StopLimitOrderTest {
     void securityExist_newStopLimitOrderArrive_rejectForNotEnoughCredit(){
         Broker poorBroker = Broker.builder().brokerId(1).credit(100).build();
         brokerRepository.addBroker(poorBroker);
-        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000, poorBroker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 16000);
+        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(
+                1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000,
+                poorBroker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 16000);
+
         orderHandler.handleEnterOrder(enterOrderRq);
         assertThat(security.getInactiveOrderBook().getBuyQueue()).isEmpty();
         assertThat(security.getOrderBook().getBuyQueue().size()).isEqualTo(5);
@@ -194,7 +217,10 @@ public class StopLimitOrderTest {
         Shareholder poorShareholder = Shareholder.builder().shareholderId(2).build();
         poorShareholder.incPosition(security, 50);
         shareholderRepository.addShareholder(poorShareholder);
-        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(1, security.getIsin(), 11, LocalDateTime.now(), SELL, 100, 15000, broker.getBrokerId(), poorShareholder.getShareholderId(), 0, 0, 14000);
+        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(
+                1, security.getIsin(), 11, LocalDateTime.now(), SELL, 100, 15000,
+                broker.getBrokerId(), poorShareholder.getShareholderId(), 0, 0, 14000);
+
         orderHandler.handleEnterOrder(enterOrderRq);
         assertThat(security.getInactiveOrderBook().getBuyQueue()).isEmpty();
         assertThat(security.getOrderBook().getBuyQueue().size()).isEqualTo(5);
@@ -211,7 +237,10 @@ public class StopLimitOrderTest {
 
     @Test
     void securityExistWIthNonEmptyOrderBook_aStopLimitArrivedWithLowerStopPriceThanMarketPrice_instantlyStopLimitActived(){
-        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 19000);
+        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(
+                1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000,
+                broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 19000);
+
         orderHandler.handleEnterOrder(enterOrderRq);
         assertThat(security.getInactiveOrderBook().getBuyQueue()).isEmpty();
         assertThat(security.getOrderBook().getBuyQueue().size()).isEqualTo(6);
@@ -232,6 +261,7 @@ public class StopLimitOrderTest {
         EnterOrderRq stopLimitOrder3 = EnterOrderRq.createNewOrderRq(
                 3, security.getIsin(), 12, LocalDateTime.now(), BUY, 10, 15000,
                 broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 16000);
+
         orderHandler.handleEnterOrder(stopLimitOrder1);
         orderHandler.handleEnterOrder(stopLimitOrder2);
         orderHandler.handleEnterOrder(stopLimitOrder3);
@@ -256,7 +286,9 @@ public class StopLimitOrderTest {
 
         stopLimitOrders.forEach(order -> security.getInactiveOrderBook().enqueue(order));
 
-        EnterOrderRq updateOrderRq = EnterOrderRq.createUpdateOrderRq(4, security.getIsin(), 12, LocalDateTime.now(), BUY, 100, 15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 16000);
+        EnterOrderRq updateOrderRq = EnterOrderRq.createUpdateOrderRq(
+                4, security.getIsin(), 12, LocalDateTime.now(), BUY, 100, 15000,
+                broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 16000);
 
         orderHandler.handleEnterOrder(updateOrderRq);
 
@@ -282,7 +314,9 @@ public class StopLimitOrderTest {
 
         stopLimitOrders.forEach(order -> security.getInactiveOrderBook().enqueue(order));
 
-        EnterOrderRq updateOrderRq = EnterOrderRq.createUpdateOrderRq(4, security.getIsin(), 12, LocalDateTime.now(), SELL, 100_000, 15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 16000);
+        EnterOrderRq updateOrderRq = EnterOrderRq.createUpdateOrderRq(
+                4, security.getIsin(), 12, LocalDateTime.now(), SELL, 100_000, 15000,
+                broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 16000);
 
         orderHandler.handleEnterOrder(updateOrderRq);
 
@@ -301,27 +335,34 @@ public class StopLimitOrderTest {
     @Test
     void securityWithInactiveStopLimitExist_SomeOrderActiveAStopLimitOrder_thisActivedStopLimitWillActiveAnotherStopLimit(){
         security.updateMarketPrice(1000);
-        EnterOrderRq inactiveOrderRq1 = EnterOrderRq.createNewOrderRq(1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10,
-                15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 15000);
+        EnterOrderRq inactiveOrderRq1 = EnterOrderRq.createNewOrderRq(
+                1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10,15000,
+                broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 15000);
+
         orderHandler.handleEnterOrder(inactiveOrderRq1);
         broker.increaseCreditBy(1000_000_000);
 
-        EnterOrderRq inactiveOrderRq2 = EnterOrderRq.createNewOrderRq(2, security.getIsin(), 12, LocalDateTime.now(), BUY, 1085,
-                15810, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 15800);
+        EnterOrderRq inactiveOrderRq2 = EnterOrderRq.createNewOrderRq(
+                2, security.getIsin(), 12, LocalDateTime.now(), BUY, 1085,15810,
+                broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 15800);
+
         orderHandler.handleEnterOrder(inactiveOrderRq2);
         broker.increaseCreditBy(1000_000_000);
 
 
-        EnterOrderRq inactiveOrderRq3 = EnterOrderRq.createNewOrderRq(3, security.getIsin(), 13, LocalDateTime.now(), BUY, 340,
-                15800, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 15800);
+        EnterOrderRq inactiveOrderRq3 = EnterOrderRq.createNewOrderRq(
+                3, security.getIsin(), 13, LocalDateTime.now(), BUY, 340,15800,
+                broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 15800);
+
         orderHandler.handleEnterOrder(inactiveOrderRq3);
         broker.increaseCreditBy(1000_000_000);
 
 
         assertThat(security.getInactiveOrderBook().getBuyQueue().size()).isEqualTo(3);
 
-        EnterOrderRq regularOrderMarketPriceChanger = EnterOrderRq.createNewOrderRq(4, security.getIsin(), 14, LocalDateTime.now(), BUY, 10,
-                15900, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0);
+        EnterOrderRq regularOrderMarketPriceChanger = EnterOrderRq.createNewOrderRq(
+                4, security.getIsin(), 14, LocalDateTime.now(), BUY, 10,15900,
+                broker.getBrokerId(), shareholder.getShareholderId(), 0, 0);
 
         orderHandler.handleEnterOrder(regularOrderMarketPriceChanger);
 
@@ -345,7 +386,8 @@ public class StopLimitOrderTest {
 
         // When
         EnterOrderRq updateOrderRq = EnterOrderRq.createUpdateOrderRq(
-                4, security.getIsin(), 12, LocalDateTime.now(), BUY, 15, 15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 14500);
+                4, security.getIsin(), 12, LocalDateTime.now(), BUY, 15, 15000,
+                broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 14500);
 
         orderHandler.handleEnterOrder(updateOrderRq);
 
@@ -357,8 +399,10 @@ public class StopLimitOrderTest {
     @Test
     void anInactiveOrderExist_deleteInactiveOrderRequestArrived_inactiveOrderBookMustBedeleted(){
         security.updateMarketPrice(1000);
-        EnterOrderRq inactiveOrderRq1 = EnterOrderRq.createNewOrderRq(1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10,
-                15000, broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 15000);
+        EnterOrderRq inactiveOrderRq1 = EnterOrderRq.createNewOrderRq(
+                1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10,15000,
+                broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 15000);
+
         orderHandler.handleEnterOrder(inactiveOrderRq1);
 
         assertThat(security.getInactiveOrderBook().getBuyQueue().size()).isEqualTo(1);
@@ -376,6 +420,44 @@ public class StopLimitOrderTest {
         assertThat(outputEvent.getRequestId()).isEqualTo(2);
 
 
+    }
+    @Test
+    void brokerWithZeroCreditExist_AnInactiveOrderArrive_itMustBeRejected(){
+        broker.decreaseCreditBy(broker.getCredit());
+        assertThat(broker.getCredit()).isEqualTo(0);
+        security.updateMarketPrice(15000);
+        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(
+                1, security.getIsin(), 11, LocalDateTime.now(), BUY, 10, 15000,
+                broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 16000);
+
+        orderHandler.handleEnterOrder(enterOrderRq);
+        assertThat(security.getInactiveOrderBook().getBuyQueue()).isEmpty();
+
+
+        ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
+        verify(eventPublisher).publish(orderRejectedCaptor.capture());
+        OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
+        assertThat(outputEvent.getRequestId()).isEqualTo(1);
+        assertThat(outputEvent.getErrors()).containsOnly(
+                Message.BUYER_HAS_NOT_ENOUGH_CREDIT
+        );
+
+    }
+
+    @Test
+    void someOrdersAreExitsInOrderBook_changeOrderStopPriceRQArrived_errorCannotChangeOrderToInactiveOrder(){
+        EnterOrderRq updateOrder = EnterOrderRq.createUpdateOrderRq(
+                11, security.getIsin(), 2, LocalDateTime.now(), BUY, 43, 323044,
+                broker.getBrokerId(), shareholder.getShareholderId(), 0, 0, 100);
+        orderHandler.handleEnterOrder(updateOrder);
+
+        ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
+        verify(eventPublisher).publish(orderRejectedCaptor.capture());
+        OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
+        assertThat(outputEvent.getRequestId()).isEqualTo(11);
+        assertThat(outputEvent.getErrors()).containsOnly(
+                Message.CANNOT_SPECIFY_STOP_PRICE_FOR_A_NON_STOP_LIMIT_ORDER
+        );
     }
 
 }
