@@ -85,6 +85,27 @@ public class AuctionMatchingTest {
 
     }
 
+    @Test
+    void performReopeningOperationWithTradesTest() {
+        //  orders in the queue
+        Order matchingBuyOrder = new Order(100, security, Side.BUY, 1000, 15500, broker1, shareholder);
+        Order incomingSellOrder = new Order(200, security, Side.SELL, 300, 15450, broker2, shareholder);
+        security.getOrderBook().enqueue(matchingBuyOrder);
+
+        // send request to change matching state to AUCTION
+        ChangeMatchingStateRq changeMatchingStateRq = new ChangeMatchingStateRq("ABC", MatchingState.AUCTION);
+        orderHandler.handleChangeMatchingState(changeMatchingStateRq);
+
+        // perform reopening operation
+        orderHandler.handleReopeningOperation();
+
+        // to verify that trades are executed during reopening (OrderExecutedEvent)
+        ArgumentCaptor<TradeEvent> tradeEventCaptor = ArgumentCaptor.forClass(TradeEvent.class);
+        verify(eventPublisher).publish(tradeEventCaptor.capture());
+        List<TradeEvent> tradeEvents = tradeEventCaptor.getAllValues();
+        // assert to verify the trades
+    }
+
 
 
 
