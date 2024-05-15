@@ -10,6 +10,7 @@ import ir.ramtung.tinyme.messaging.request.OrderEntryType;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.LinkedList;
 import java.util.List;
 
 @Getter
@@ -146,9 +147,10 @@ public class Security {
 
     public void updateMarketPrice(int newPrice) { this.marketPrice = newPrice; }
 
-    public void changeMatchingState(MatchingState newMatchingState, Matcher matcher) {
-        //TODO : match all the order in the orderBook
+    //TODO : This function does 2 jobs at the same time, any alternatives?
+    public LinkedList<Trade> changeMatchingState(MatchingState newMatchingState, Matcher matcher) {
         this.matchingState = newMatchingState;
+        //TODO : match all the order in the orderBook
     }
 
     public void updateOpeningPrice(Order newOrder){

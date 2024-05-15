@@ -111,8 +111,15 @@ public class OrderHandler {
 
     public void handleChangeMatchingStateRq(ChangeMatchingStateRq changeMatchingStateRq){
         Security security = securityRepository.findSecurityByIsin(changeMatchingStateRq.getSecurityIsin());
-        security.changeMatchingState(changeMatchingStateRq.getTargetState(), matcher);
+        if(security == null)
+            return;
+        LinkedList<Trade> trades = security.changeMatchingState(changeMatchingStateRq.getTargetState(), matcher);
         eventPublisher.publish(new SecurityStateChangedEvent(LocalDateTime.now(), changeMatchingStateRq.getSecurityIsin(), changeMatchingStateRq.getTargetState()));
+        for (Trade trade : trades){
+            eventPublisher.publish(new TradeEvent(LocalDateTime.now(), trade.getSecurity().getIsin(),
+                    trade.getPrice(), trade.getQuantity(),
+                    trade.getBuy().getShareholder().getShareholderId(), trade.getSell().getShareholder().getShareholderId()));
+        }
     }
 
     private void validateEnterOrderRq(EnterOrderRq enterOrderRq) throws InvalidRequestException {
