@@ -5,6 +5,7 @@ import ir.ramtung.tinyme.messaging.request.DeleteOrderRq;
 import ir.ramtung.tinyme.messaging.request.EnterOrderRq;
 import ir.ramtung.tinyme.domain.service.Matcher;
 import ir.ramtung.tinyme.messaging.Message;
+import ir.ramtung.tinyme.messaging.request.MatchingState;
 import ir.ramtung.tinyme.messaging.request.OrderEntryType;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,6 +27,8 @@ public class Security {
     private StopLimitOrderBook inactiveOrderBook = new StopLimitOrderBook();
     @Builder.Default
     private int marketPrice = 0;
+    @Builder.Default
+    private MatchingState matchingState = MatchingState.CONTINUOUS;
 
     public MatchResult newOrder(EnterOrderRq enterOrderRq, Broker broker, Shareholder shareholder, Matcher matcher) {
         //TODO : Here is a bug : if the seller does not have enough credit and want to save a stopLimitOrder . it will failed (Play with OrderStatus)
@@ -142,6 +145,6 @@ public class Security {
 
     public void updateMarketPrice(int newPrice) { this.marketPrice = newPrice; }
 
-
+    public void changeMatchingState(MatchingState newMatchingState) { this.matchingState = newMatchingState; }
 
 }
