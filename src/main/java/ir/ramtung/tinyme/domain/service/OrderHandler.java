@@ -60,6 +60,7 @@ public class OrderHandler {
                 return;
             }
             if (matchResult.outcome() == MatchingOutcome.AUCTIONED) {
+                eventPublisher.publish(new OrderAcceptedEvent(enterOrderRq.getRequestId(), enterOrderRq.getOrderId()));
                 eventPublisher.publish(new OpeningPriceEvent(LocalDateTime.now(), security.getIsin(), security.getOpeningPrice(), security.getTradableQuantity()));
                 return;
             }
