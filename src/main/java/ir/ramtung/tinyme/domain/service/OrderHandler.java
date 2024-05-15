@@ -111,7 +111,7 @@ public class OrderHandler {
 
     public void handleChangeMatchingStateRq(ChangeMatchingStateRq changeMatchingStateRq){
         Security security = securityRepository.findSecurityByIsin(changeMatchingStateRq.getSecurityIsin());
-        security.changeMatchingState(changeMatchingStateRq.getTargetState());
+        security.changeMatchingState(changeMatchingStateRq.getTargetState(), matcher);
         eventPublisher.publish(new SecurityStateChangedEvent(LocalDateTime.now(), changeMatchingStateRq.getSecurityIsin(), changeMatchingStateRq.getTargetState()));
     }
 

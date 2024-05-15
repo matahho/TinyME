@@ -146,7 +146,7 @@ public class Security {
 
     public void updateMarketPrice(int newPrice) { this.marketPrice = newPrice; }
 
-    public void changeMatchingState(MatchingState newMatchingState) {
+    public void changeMatchingState(MatchingState newMatchingState, Matcher matcher) {
         //TODO : match all the order in the orderBook
         this.matchingState = newMatchingState;
     }
