@@ -152,10 +152,6 @@ public class OrderHandler {
             throw new InvalidRequestException(errors);
     }
 
-    private void validateChangeMatchingStateRq(ChangeMatchingStateRq changeMatchingStateRq) throws InvalidRequestException {
-        //TODO :
-    }
-
     private void validateStopLimitOrder(EnterOrderRq enterOrderRq , List<String> errors, Security security){
         if (enterOrderRq.getStopPrice() < 0)
             errors.add(Message.STOP_PRICE_NOT_POSITIVE);
@@ -164,7 +160,7 @@ public class OrderHandler {
         if (enterOrderRq.getStopPrice() != 0 && enterOrderRq.getPeakSize() != 0)
             errors.add(Message.STOP_LIMIT_ORDER_PEAK_SIZE_NOT_ZERO);
         if (security.getMatchingState() != MatchingState.CONTINUOUS && enterOrderRq.getStopPrice() > 0)
-            errors.add(Message.CANNOT_USE_AUCTION_MATCHING_WITH_STOP_PRICE)
+            errors.add(Message.CANNOT_USE_AUCTION_MATCHING_WITH_STOP_PRICE);
     }
     private void validateMEQField(EnterOrderRq enterOrderRq, List<String> errors, Security security){
         if (enterOrderRq.getMinimumExecutionQuantity() < 0)
@@ -174,7 +170,7 @@ public class OrderHandler {
         if (enterOrderRq.getRequestType() == OrderEntryType.UPDATE_ORDER && enterOrderRq.getMinimumExecutionQuantity() > 0)
             errors.add(Message.ORDER_UPDATE_MEQ_NOT_ZERO);
         if (security.getMatchingState() != MatchingState.CONTINUOUS && enterOrderRq.getMinimumExecutionQuantity() > 0)
-            errors.add(Message.CANNOT_USE_AUCTION_MATCHING_WITH_MEQ)
+            errors.add(Message.CANNOT_USE_AUCTION_MATCHING_WITH_MEQ);
     }
 
 }
