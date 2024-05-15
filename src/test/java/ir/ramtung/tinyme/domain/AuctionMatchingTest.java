@@ -7,10 +7,7 @@ import ir.ramtung.tinyme.domain.service.OrderHandler;
 import ir.ramtung.tinyme.messaging.EventPublisher;
 import ir.ramtung.tinyme.messaging.Message;
 import ir.ramtung.tinyme.messaging.TradeDTO;
-import ir.ramtung.tinyme.messaging.event.OrderAcceptedEvent;
-import ir.ramtung.tinyme.messaging.event.OrderDeletedEvent;
-import ir.ramtung.tinyme.messaging.event.OrderExecutedEvent;
-import ir.ramtung.tinyme.messaging.event.OrderRejectedEvent;
+import ir.ramtung.tinyme.messaging.event.*;
 import ir.ramtung.tinyme.messaging.request.DeleteOrderRq;
 import ir.ramtung.tinyme.messaging.request.EnterOrderRq;
 import ir.ramtung.tinyme.repository.BrokerRepository;
@@ -74,7 +71,7 @@ public class AuctionMatchingTest {
 
         // send request to change matching state to AUCTION
         ChangeMatchingStateRq changeMatchingStateRq = new ChangeMatchingStateRq("ABC", MatchingState.AUCTION);
-        orderHandler.handleChangeMatchingState(changeMatchingStateRq);
+        orderHandler.handleChangeMatchingStateRq(changeMatchingStateRq);
 
         // verify that  opening price(bazgoshayi) is calculated and announced
         ArgumentCaptor<OpeningPriceEvent> openingPriceEventCaptor = ArgumentCaptor.forClass(OpeningPriceEvent.class);
@@ -94,7 +91,7 @@ public class AuctionMatchingTest {
 
         // send request to change matching state to AUCTION
         ChangeMatchingStateRq changeMatchingStateRq = new ChangeMatchingStateRq("ABC", MatchingState.AUCTION);
-        orderHandler.handleChangeMatchingState(changeMatchingStateRq);
+        orderHandler.handleChangeMatchingStateRq(changeMatchingStateRq);
 
         // perform reopening operation
         orderHandler.handleReopeningOperation();

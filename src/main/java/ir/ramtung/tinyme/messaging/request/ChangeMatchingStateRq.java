@@ -6,7 +6,7 @@ public class ChangeMatchingStateRq {
     private String securityIsin;
     private MatchingState targetState;
 
-    private ChangeMatchingStateRq(String securityIsin, MatchingState matchingState){
+    public ChangeMatchingStateRq(String securityIsin, MatchingState matchingState){
         this.securityIsin = securityIsin;
         this.targetState = matchingState;
     }
