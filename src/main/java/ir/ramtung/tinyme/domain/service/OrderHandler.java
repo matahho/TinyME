@@ -59,6 +59,10 @@ public class OrderHandler {
                 eventPublisher.publish(new OrderRejectedEvent(enterOrderRq.getRequestId(), enterOrderRq.getOrderId(), List.of(Message.ORDER_FAILED_TO_REACH_MEQ)));
                 return;
             }
+            if (matchResult.outcome() == MatchingOutcome.AUCTIONED) {
+                eventPublisher.publish(new OpeningPriceEvent(LocalDateTime.now(), security.getIsin(), security.getOpeningPrice(), security.getTradableQuantity()));
+                return;
+            }
             if (matchResult.outcome() == MatchingOutcome.NOT_ENOUGH_MARKET_PRICE) {
                 if ((!broker.hasEnoughCredit((long) enterOrderRq.getQuantity() * enterOrderRq.getPrice()) && enterOrderRq.getSide() == Side.BUY) || (!shareholder.hasEnoughPositionsOn(security, enterOrderRq.getQuantity()) && enterOrderRq.getSide() == Side.SELL)) {
                     security.getInactiveOrderBook().removeByOrderId(enterOrderRq.getSide(), enterOrderRq.getOrderId());
