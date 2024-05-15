@@ -6,10 +6,7 @@ import ir.ramtung.tinyme.messaging.exception.InvalidRequestException;
 import ir.ramtung.tinyme.messaging.EventPublisher;
 import ir.ramtung.tinyme.messaging.TradeDTO;
 import ir.ramtung.tinyme.messaging.event.*;
-import ir.ramtung.tinyme.messaging.request.ChangeMatchingStateRq;
-import ir.ramtung.tinyme.messaging.request.DeleteOrderRq;
-import ir.ramtung.tinyme.messaging.request.EnterOrderRq;
-import ir.ramtung.tinyme.messaging.request.OrderEntryType;
+import ir.ramtung.tinyme.messaging.request.*;
 import ir.ramtung.tinyme.repository.BrokerRepository;
 import ir.ramtung.tinyme.repository.SecurityRepository;
 import ir.ramtung.tinyme.repository.ShareholderRepository;
@@ -138,8 +135,8 @@ public class OrderHandler {
         if (enterOrderRq.getPeakSize() < 0 || enterOrderRq.getPeakSize() >= enterOrderRq.getQuantity())
             errors.add(Message.INVALID_PEAK_SIZE);
 
-        validateMEQField(enterOrderRq, errors);
-        validateStopLimitOrder(enterOrderRq, errors);
+        validateMEQField(enterOrderRq, errors, security);
+        validateStopLimitOrder(enterOrderRq, errors, security);
 
         if (!errors.isEmpty())
             throw new InvalidRequestException(errors);
@@ -159,21 +156,25 @@ public class OrderHandler {
         //TODO :
     }
 
-    private void validateStopLimitOrder(EnterOrderRq enterOrderRq , List<String> errors){
+    private void validateStopLimitOrder(EnterOrderRq enterOrderRq , List<String> errors, Security security){
         if (enterOrderRq.getStopPrice() < 0)
             errors.add(Message.STOP_PRICE_NOT_POSITIVE);
         if (enterOrderRq.getStopPrice() != 0 && enterOrderRq.getMinimumExecutionQuantity() != 0)
             errors.add(Message.STOP_LIMIT_ORDER_MEQ_NOT_ZERO);
         if (enterOrderRq.getStopPrice() != 0 && enterOrderRq.getPeakSize() != 0)
             errors.add(Message.STOP_LIMIT_ORDER_PEAK_SIZE_NOT_ZERO);
+        if (security.getMatchingState() != MatchingState.CONTINUOUS && enterOrderRq.getStopPrice() > 0)
+            errors.add(Message.CANNOT_USE_AUCTION_MATCHING_WITH_STOP_PRICE)
     }
-    private void validateMEQField(EnterOrderRq enterOrderRq, List<String> errors){
+    private void validateMEQField(EnterOrderRq enterOrderRq, List<String> errors, Security security){
         if (enterOrderRq.getMinimumExecutionQuantity() < 0)
             errors.add(Message.ORDER_MEQ_IS_NOT_POSITIVE);
         if (enterOrderRq.getMinimumExecutionQuantity() > enterOrderRq.getQuantity())
             errors.add(Message.ORDER_MEQ_IS_BIGGER_THAN_QUANTITY);
         if (enterOrderRq.getRequestType() == OrderEntryType.UPDATE_ORDER && enterOrderRq.getMinimumExecutionQuantity() > 0)
             errors.add(Message.ORDER_UPDATE_MEQ_NOT_ZERO);
+        if (security.getMatchingState() != MatchingState.CONTINUOUS && enterOrderRq.getMinimumExecutionQuantity() > 0)
+            errors.add(Message.CANNOT_USE_AUCTION_MATCHING_WITH_MEQ)
     }
 
 }
