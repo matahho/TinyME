@@ -25,6 +25,9 @@ public final class MatchResult {
     public static MatchResult notEnoughMarketPrice() {
         return new MatchResult(MatchingOutcome.NOT_ENOUGH_MARKET_PRICE, null, new LinkedList<>());
     }
+    public static MatchResult auctioned() {
+        return new MatchResult(MatchingOutcome.AUCTIONED, null,  new LinkedList<>());
+    }
     private MatchResult(MatchingOutcome outcome, Order remainder, LinkedList<Trade> trades) {
         this.outcome = outcome;
         this.remainder = remainder;

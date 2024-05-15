@@ -1,6 +1,8 @@
 package ir.ramtung.tinyme.domain.service;
 
 import ir.ramtung.tinyme.domain.entity.*;
+import ir.ramtung.tinyme.messaging.request.MatchingState;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedList;
@@ -55,6 +57,18 @@ public class Matcher {
         return MatchResult.executed(newOrder, trades);
     }
 
+    public MatchResult auctionSubmit(Order newOrder) {
+        if(newOrder.getBroker().getCredit() < newOrder.getValue())
+            return MatchResult.notEnoughCredit();
+        else {
+            newOrder.getSecurity().getOrderBook().enqueue(newOrder);
+            newOrder.getSecurity().updateOpeningPrice(newOrder);
+            if(newOrder.getSide() == Side.BUY)
+                newOrder.getBroker().decreaseCreditBy(newOrder.getValue());
+            return MatchResult.auctioned();
+        }
+    }
+
     private void rollbackTrades(Order newOrder, LinkedList<Trade> trades) {
         if(newOrder.getSide() == Side.BUY) {
             newOrder.getBroker().increaseCreditBy(trades.stream().mapToLong(Trade::getTradedValue).sum());
@@ -77,13 +91,20 @@ public class Matcher {
     }
 
     public MatchResult execute(Order order) {
-        MatchResult result = match(order);
+        MatchResult result = null;
+        if(order.getSecurity().getMatchingState() == MatchingState.AUCTION)
+            result = auctionSubmit(order);
+        else
+            result = match(order);
+
         if (result.outcome() == MatchingOutcome.NOT_ENOUGH_CREDIT)
             return result;
 
         if (result.outcome() == MatchingOutcome.NOT_ENOUGH_INITIAL_EXECUTION){
             return result;
         }
+        if(result.outcome() == MatchingOutcome.AUCTIONED)
+            return result;
 
         if (result.remainder().getQuantity() > 0) {
             if (order.getSide() == Side.BUY) {
