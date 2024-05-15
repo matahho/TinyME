@@ -10,7 +10,6 @@ import ir.ramtung.tinyme.messaging.request.OrderEntryType;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.util.LinkedList;
 import java.util.List;
 
 @Getter
@@ -147,10 +146,17 @@ public class Security {
 
     public void updateMarketPrice(int newPrice) { this.marketPrice = newPrice; }
 
-    public void changeMatchingState(MatchingState newMatchingState) { this.matchingState = newMatchingState; }
+    public void changeMatchingState(MatchingState newMatchingState) {
+        //TODO : match all the order in the orderBook
+        this.matchingState = newMatchingState;
+    }
 
     public void updateOpeningPrice(Order newOrder){
         //TODO : implement opening price calculations
+    }
+
+    public int getTradableQuantity() {
+        //TODO : calculate tradable quantity based on OpeningPrice and orderBook
     }
 
 }
