@@ -29,6 +29,8 @@ public class Security {
     private int marketPrice = 0;
     @Builder.Default
     private MatchingState matchingState = MatchingState.CONTINUOUS;
+    @Builder.Default
+    private int openingPrice = 0;
 
     public MatchResult newOrder(EnterOrderRq enterOrderRq, Broker broker, Shareholder shareholder, Matcher matcher) {
         //TODO : Here is a bug : if the seller does not have enough credit and want to save a stopLimitOrder . it will failed (Play with OrderStatus)
@@ -146,5 +148,9 @@ public class Security {
     public void updateMarketPrice(int newPrice) { this.marketPrice = newPrice; }
 
     public void changeMatchingState(MatchingState newMatchingState) { this.matchingState = newMatchingState; }
+
+    public void updateOpeningPrice(Order newOrder){
+        //TODO : implement opening price calculations
+    }
 
 }
