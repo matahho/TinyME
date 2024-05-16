@@ -149,9 +149,11 @@ public class Security {
 
     //TODO : This function does 2 jobs at the same time, any alternatives?
     public LinkedList<Trade> changeMatchingState(MatchingState newMatchingState, Matcher matcher) {
+        MatchingState oldMatchingState = matchingState;
         this.matchingState = newMatchingState;
-        //TODO : match all the order in the orderBook
-        return new LinkedList<>();
+        if(oldMatchingState == MatchingState.AUCTION)
+            return matcher.auctionMatch(orderBook).trades();
+        return new LinkedList<Trade>();
     }
 
     public void updateOpeningPrice(){

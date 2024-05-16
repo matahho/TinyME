@@ -70,6 +70,49 @@ public class Matcher {
         }
     }
 
+    public MatchResult auctionMatch(OrderBook orderBook){
+//        TODO : is it possible that no match happens?
+        LinkedList<Trade> auctionTrades = new LinkedList<Trade>();
+
+        while(orderBook.hasOrderOfType(orderBook.getBuyQueue().getFirst().getSide().opposite()) && orderBook.getBuyQueue().getFirst().getQuantity() > 0) {
+            Order topBuyOrder = orderBook.getBuyQueue().getFirst();
+            Order matchingOrder = orderBook.matchWithFirst(topBuyOrder);
+            if (matchingOrder == null)
+                break;
+            Trade trade = new Trade(topBuyOrder.getSecurity(), matchingOrder.getSecurity().getOpeningPrice(), Math.min(topBuyOrder.getQuantity(), matchingOrder.getQuantity()), topBuyOrder, matchingOrder);
+            trade.increaseSellersCredit();
+            topBuyOrder.getBroker().increaseCreditBy((long) trade.getQuantity()*topBuyOrder.getPrice() - trade.getTradedValue());
+
+            if (topBuyOrder.getQuantity() >= matchingOrder.getQuantity()) {
+                topBuyOrder.decreaseQuantity(matchingOrder.getQuantity());
+                orderBook.removeFirst(matchingOrder.getSide());
+                if (matchingOrder instanceof IcebergOrder icebergOrder) {
+                    icebergOrder.decreaseQuantity(matchingOrder.getQuantity());
+                    icebergOrder.replenish();
+                    if (icebergOrder.getQuantity() > 0)
+                        orderBook.enqueue(icebergOrder);
+                }
+            } else {
+                matchingOrder.decreaseQuantity(topBuyOrder.getQuantity());
+                topBuyOrder.makeQuantityZero();
+            }
+
+            if(topBuyOrder.getQuantity() == 0)
+                orderBook.removeFirst(Side.BUY);
+
+            auctionTrades.add(trade);
+        }
+
+        if (!auctionTrades.isEmpty()) {
+            for (Trade trade : auctionTrades) {
+                trade.getBuy().getShareholder().incPosition(trade.getSecurity(), trade.getQuantity());
+                trade.getSell().getShareholder().decPosition(trade.getSecurity(), trade.getQuantity());
+            }
+        }
+
+        return MatchResult.executed(null, auctionTrades);
+    }
+
     private void rollbackTrades(Order newOrder, LinkedList<Trade> trades) {
         if(newOrder.getSide() == Side.BUY) {
             newOrder.getBroker().increaseCreditBy(trades.stream().mapToLong(Trade::getTradedValue).sum());
