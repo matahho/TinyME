@@ -61,8 +61,9 @@ public class Matcher {
         if(newOrder.getBroker().getCredit() < newOrder.getValue())
             return MatchResult.notEnoughCredit();
         else {
-            newOrder.getSecurity().getOrderBook().enqueue(newOrder);
-            newOrder.getSecurity().updateOpeningPrice(newOrder);
+            Security securityOfNewOrder = newOrder.getSecurity();
+            securityOfNewOrder.getOrderBook().enqueue(newOrder);
+            securityOfNewOrder.updateOpeningPrice();
             if(newOrder.getSide() == Side.BUY)
                 newOrder.getBroker().decreaseCreditBy(newOrder.getValue());
             return MatchResult.auctioned();
