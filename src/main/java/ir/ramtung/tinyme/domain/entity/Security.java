@@ -154,8 +154,8 @@ public class Security {
         return new LinkedList<>();
     }
 
-    public void updateOpeningPrice(Order newOrder){
-        //TODO : implement opening price calculations
+    public void updateOpeningPrice(){
+        openingPrice = this.getOrderBook().calculateOpeningPrice(this.marketPrice);
     }
 
     public int getTradableQuantity() {
