@@ -3,10 +3,7 @@ package ir.ramtung.tinyme.domain.entity;
 import lombok.Getter;
 import org.jgroups.util.Tuple;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.*;
 
 @Getter
 public class OrderBook {
@@ -150,18 +147,25 @@ public class OrderBook {
 
     }
 
-    public long getTradableQuantityByOpeningPrice(int openingPrice){
-        long buyPossible = buyQueue.stream()
-                .filter(order -> order.getPrice() <= openingPrice)
+    public int getTradableQuantityByOpeningPrice(int openingPrice){
+        int buyPossible = buyQueue.stream()
+                .filter(order -> order.getPrice() >= openingPrice)
                 .mapToInt(Order::getTotalQuantity)
                 .sum();
-        long sellPossible = sellQueue.stream()
-                .filter(order -> order.getPrice() >= openingPrice)
+        int sellPossible = sellQueue.stream()
+                .filter(order -> order.getPrice() <= openingPrice)
                 .mapToInt(Order::getTotalQuantity)
                 .sum();
 
         return Math.min(buyPossible, sellPossible);
     }
 
-
+    public void updateOrdersPriceByOpeningPrice(){
+        buyQueue.stream()
+                .filter(order -> order.getPrice() >= order.getSecurity().getOpeningPrice())
+                .forEach(order -> order.price = order.getSecurity().getOpeningPrice());
+        sellQueue.stream()
+                .filter(order -> order.getPrice() <= order.getSecurity().getOpeningPrice())
+                .forEach(order -> order.price = order.getSecurity().getOpeningPrice());
+        }
 }
