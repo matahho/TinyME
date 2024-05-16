@@ -151,6 +151,7 @@ public class Security {
     public LinkedList<Trade> changeMatchingState(MatchingState newMatchingState, Matcher matcher) {
         this.matchingState = newMatchingState;
         //TODO : match all the order in the orderBook
+        return new LinkedList<>();
     }
 
     public void updateOpeningPrice(Order newOrder){
@@ -159,6 +160,7 @@ public class Security {
 
     public int getTradableQuantity() {
         //TODO : calculate tradable quantity based on OpeningPrice and orderBook
+        return 0 ;
     }
 
 }

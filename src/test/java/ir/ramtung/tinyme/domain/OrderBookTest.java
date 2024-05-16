@@ -3,7 +3,9 @@ package ir.ramtung.tinyme.domain;
 import ir.ramtung.tinyme.domain.entity.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -76,4 +78,33 @@ class OrderBookTest {
         orderBook.removeByOrderId(Side.SELL, 10);
         assertThat(orderBook.getSellQueue()).isEqualTo(orders.subList(5, 9));
     }
+
+    @Test
+    void someOrdersAreExist_calculateOpeningPriceCalled_returnCorrectPrice(){
+        assertThat(security.getOrderBook().calculateOpeningPrice(100000000)).isEqualTo(15800);
+    }
+
+    @Test
+    void someOrdersAreExistSameQuantity_calculateOpeningPriceCalled_returnCorrectPrice(){
+        Broker broker = Broker.builder().build();
+        Shareholder shareholder = Shareholder.builder().build();
+        shareholder.incPosition(security, 100_000);
+        orders = Arrays.asList(
+                new Order(1, security, Side.BUY, 10, 4, broker, shareholder),
+                new Order(2, security, Side.BUY, 10, 3, broker, shareholder),
+                new Order(3, security, Side.BUY, 10, 1, broker, shareholder),
+
+                new Order(8, security, Side.SELL, 10, 6, broker, shareholder),
+                new Order(9, security, Side.SELL, 10, 5, broker, shareholder),
+                new Order(10, security, Side.SELL, 10, 4, broker, shareholder)
+        );
+        OrderBook mockedOrderBook = new OrderBook();
+        orders.forEach(order -> mockedOrderBook.enqueue(order));
+
+        assertThat(mockedOrderBook.calculateOpeningPrice(3)).isEqualTo(3);
+
+
+
+    }
+
 }

@@ -1,7 +1,9 @@
 package ir.ramtung.tinyme.domain.entity;
 
 import lombok.Getter;
+import org.jgroups.util.Tuple;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -92,4 +94,60 @@ public class OrderBook {
                 .mapToInt(Order::getTotalQuantity)
                 .sum();
     }
+
+    public int calculateOpeningPrice(int lastTradePrice){
+        Order chippestBuyOrder = this.buyQueue.getLast();
+        Order mostExpensiveSellOrder = this.sellQueue.getFirst();
+
+        int minDistanceToLastTradePrice = Integer.MAX_VALUE;
+        int openingPrice = chippestBuyOrder.getPrice();
+        int maximumTradeableQuantity = 0;
+
+
+        for (int price = chippestBuyOrder.getPrice(); price <= mostExpensiveSellOrder.getPrice(); price++) {
+            int tradeableQuantity = calculateQuantityForAnOpeningPrice(price);
+            int distanceToLastTradePrice = Math.abs(price - lastTradePrice);
+
+            if (tradeableQuantity > maximumTradeableQuantity) {
+                maximumTradeableQuantity = tradeableQuantity;
+                openingPrice = price;
+                minDistanceToLastTradePrice = distanceToLastTradePrice;
+
+            } else if (tradeableQuantity == maximumTradeableQuantity) {
+                if (distanceToLastTradePrice < minDistanceToLastTradePrice) {
+                    openingPrice = price;
+                    minDistanceToLastTradePrice = distanceToLastTradePrice;
+                } else if (distanceToLastTradePrice == minDistanceToLastTradePrice) {
+                    if (price < openingPrice) {
+                        openingPrice = price;
+                    }
+                }
+            }
+        }
+
+        return openingPrice ;
+    }
+
+    protected int calculateQuantityForAnOpeningPrice(int openingPrice){
+        int possibleBuyQuantity = 0;
+        int possibleSellQuantity = 0;
+        for (Order buyOrder:this.getBuyQueue()){
+            if (buyOrder.getPrice() >= openingPrice)
+                possibleBuyQuantity += buyOrder.getQuantity();
+            else
+                break;
+        }
+        for (Order sellOrder:this.getSellQueue()){
+            if (sellOrder.getPrice() <= openingPrice)
+                possibleBuyQuantity += sellOrder.getQuantity();
+            else
+                break;
+        }
+        return Math.min(possibleSellQuantity, possibleBuyQuantity);
+
+    }
+
+
+
+
 }

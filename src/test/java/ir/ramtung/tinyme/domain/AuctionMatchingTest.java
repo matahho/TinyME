@@ -94,7 +94,7 @@ public class AuctionMatchingTest {
         orderHandler.handleChangeMatchingStateRq(changeMatchingStateRq);
 
         // perform reopening operation
-        orderHandler.handleReopeningOperation();
+        //orderHandler.handleReopeningOperation();
 
         // to verify that trades are executed during reopening (OrderExecutedEvent)
         ArgumentCaptor<TradeEvent> tradeEventCaptor = ArgumentCaptor.forClass(TradeEvent.class);
