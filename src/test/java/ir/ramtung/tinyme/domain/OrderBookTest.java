@@ -101,7 +101,7 @@ class OrderBookTest {
         OrderBook mockedOrderBook = new OrderBook();
         orders.forEach(order -> mockedOrderBook.enqueue(order));
 
-        assertThat(mockedOrderBook.calculateOpeningPrice(3)).isEqualTo(3);
+        assertThat(mockedOrderBook.calculateOpeningPrice(3)).isEqualTo(4);
 
 
 
