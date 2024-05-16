@@ -139,7 +139,7 @@ public class OrderBook {
         }
         for (Order sellOrder:this.getSellQueue()){
             if (sellOrder.getPrice() <= openingPrice)
-                possibleBuyQuantity += sellOrder.getQuantity();
+                possibleSellQuantity += sellOrder.getQuantity();
             else
                 break;
         }
