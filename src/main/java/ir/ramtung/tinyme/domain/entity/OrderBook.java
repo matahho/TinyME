@@ -96,6 +96,9 @@ public class OrderBook {
     }
 
     public int calculateOpeningPrice(int lastTradePrice){
+        if (buyQueue.isEmpty() || sellQueue.isEmpty()) {
+            return 0;
+        }
         Order chippestBuyOrder = this.buyQueue.getLast();
         Order mostExpensiveSellOrder = this.sellQueue.getFirst();
 
