@@ -159,13 +159,4 @@ public class OrderBook {
 
         return Math.min(buyPossible, sellPossible);
     }
-
-    public void updateOrdersPriceByOpeningPrice(){
-        buyQueue.stream()
-                .filter(order -> order.getPrice() >= order.getSecurity().getOpeningPrice())
-                .forEach(order -> order.price = order.getSecurity().getOpeningPrice());
-        sellQueue.stream()
-                .filter(order -> order.getPrice() <= order.getSecurity().getOpeningPrice())
-                .forEach(order -> order.price = order.getSecurity().getOpeningPrice());
-        }
 }
