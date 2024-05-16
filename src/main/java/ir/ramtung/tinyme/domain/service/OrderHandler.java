@@ -171,7 +171,7 @@ public class OrderHandler {
             errors.add(Message.STOP_LIMIT_ORDER_MEQ_NOT_ZERO);
         if (enterOrderRq.getStopPrice() != 0 && enterOrderRq.getPeakSize() != 0)
             errors.add(Message.STOP_LIMIT_ORDER_PEAK_SIZE_NOT_ZERO);
-        if (security.getMatchingState() != MatchingState.CONTINUOUS && enterOrderRq.getStopPrice() > 0)
+        if (security != null && security.getMatchingState() != MatchingState.CONTINUOUS && enterOrderRq.getStopPrice() > 0)
             errors.add(Message.CANNOT_USE_AUCTION_MATCHING_WITH_STOP_PRICE);
     }
     private void validateMEQField(EnterOrderRq enterOrderRq, List<String> errors, Security security){
@@ -181,7 +181,7 @@ public class OrderHandler {
             errors.add(Message.ORDER_MEQ_IS_BIGGER_THAN_QUANTITY);
         if (enterOrderRq.getRequestType() == OrderEntryType.UPDATE_ORDER && enterOrderRq.getMinimumExecutionQuantity() > 0)
             errors.add(Message.ORDER_UPDATE_MEQ_NOT_ZERO);
-        if (security.getMatchingState() != MatchingState.CONTINUOUS && enterOrderRq.getMinimumExecutionQuantity() > 0)
+        if (security != null && security.getMatchingState() != MatchingState.CONTINUOUS && enterOrderRq.getMinimumExecutionQuantity() > 0)
             errors.add(Message.CANNOT_USE_AUCTION_MATCHING_WITH_MEQ);
     }
 
