@@ -101,19 +101,19 @@ public class OrderBook {
 
         int minDistanceToLastTradePrice = Integer.MAX_VALUE;
         int openingPrice = chippestBuyOrder.getPrice();
-        int maximumTradeableQuantity = 0;
+        int maximumTradableQuantity = 0;
 
 
         for (int price = chippestBuyOrder.getPrice(); price <= mostExpensiveSellOrder.getPrice(); price++) {
-            int tradeableQuantity = calculateQuantityForAnOpeningPrice(price);
+            int tradableQuantity = calculateQuantityForAnOpeningPrice(price);
             int distanceToLastTradePrice = Math.abs(price - lastTradePrice);
 
-            if (tradeableQuantity > maximumTradeableQuantity) {
-                maximumTradeableQuantity = tradeableQuantity;
+            if (tradableQuantity > maximumTradableQuantity) {
+                maximumTradableQuantity = tradableQuantity;
                 openingPrice = price;
                 minDistanceToLastTradePrice = distanceToLastTradePrice;
 
-            } else if (tradeableQuantity == maximumTradeableQuantity) {
+            } else if (tradableQuantity == maximumTradableQuantity) {
                 if (distanceToLastTradePrice < minDistanceToLastTradePrice) {
                     openingPrice = price;
                     minDistanceToLastTradePrice = distanceToLastTradePrice;

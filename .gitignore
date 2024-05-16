@@ -25,6 +25,7 @@ replay_pid*
 
 target/
 .idea/
+.mvn
 
 # Mac
 .DS_Store
