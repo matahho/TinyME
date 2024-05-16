@@ -147,7 +147,18 @@ public class OrderBook {
 
     }
 
+    public long getTradableQuantityByOpeningPrice(int openingPrice){
+        long buyPossible = buyQueue.stream()
+                .filter(order -> order.getPrice() <= openingPrice)
+                .mapToInt(Order::getTotalQuantity)
+                .sum();
+        long sellPossible = sellQueue.stream()
+                .filter(order -> order.getPrice() >= openingPrice)
+                .mapToInt(Order::getTotalQuantity)
+                .sum();
 
+        return Math.min(buyPossible, sellPossible);
+    }
 
 
 }

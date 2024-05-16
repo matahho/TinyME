@@ -158,9 +158,6 @@ public class Security {
         openingPrice = this.getOrderBook().calculateOpeningPrice(this.marketPrice);
     }
 
-    public int getTradableQuantity() {
-        //TODO : calculate tradable quantity based on OpeningPrice and orderBook
-        return 0 ;
-    }
+    public long getTradableQuantity() { return orderBook.getTradableQuantityByOpeningPrice(openingPrice);}
 
 }
