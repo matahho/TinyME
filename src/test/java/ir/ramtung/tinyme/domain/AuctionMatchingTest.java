@@ -8,15 +8,13 @@ import ir.ramtung.tinyme.messaging.EventPublisher;
 import ir.ramtung.tinyme.messaging.Message;
 import ir.ramtung.tinyme.messaging.TradeDTO;
 import ir.ramtung.tinyme.messaging.event.*;
-import ir.ramtung.tinyme.messaging.request.DeleteOrderRq;
-import ir.ramtung.tinyme.messaging.request.EnterOrderRq;
+import ir.ramtung.tinyme.messaging.request.*;
 import ir.ramtung.tinyme.repository.BrokerRepository;
 import ir.ramtung.tinyme.repository.SecurityRepository;
 import ir.ramtung.tinyme.repository.ShareholderRepository;
-import ir.ramtung.tinyme.messaging.request.ChangeMatchingStateRq;
 import org.junit.jupiter.api.Disabled;
+import org.junit.platform.engine.support.discovery.SelectorResolver;
 import org.springframework.beans.factory.annotation.Autowired;
-import ir.ramtung.tinyme.messaging.request.MatchingState;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -66,16 +64,18 @@ public class AuctionMatchingTest {
         brokerRepository.clear();
         shareholderRepository.clear();
 
-        security = Security.builder().isin("ABC").build();
+        security = Security.builder().isin("ABC").matchingState(MatchingState.AUCTION).build();
         securityRepository.addSecurity(security);
 
         shareholder = Shareholder.builder().shareholderId(1).build();
         shareholder.incPosition(security, 100_000);
         shareholderRepository.addShareholder(shareholder);
 
-        broker1 = Broker.builder().brokerId(0).credit(1_000_000L).build();
-        broker2 = Broker.builder().brokerId(1).credit(1_000_000L).build();
+        broker1 = Broker.builder().brokerId(0).credit(100_000_000L).build();
+        broker2 = Broker.builder().brokerId(1).credit(100_000_000L).build();
         brokerRepository.addBroker(broker1);
+        brokerRepository.addBroker(broker2);
+
 
         List<Order> orders = Arrays.asList(
                 new Order(1, security, Side.BUY, 304, 15700, broker1, shareholder),
@@ -83,6 +83,7 @@ public class AuctionMatchingTest {
                 new Order(3, security, Side.BUY, 445, 15450, broker1, shareholder),
                 new Order(4, security, Side.BUY, 526, 15450, broker1, shareholder),
                 new Order(5, security, Side.BUY, 1000, 15400, broker1, shareholder),
+
                 new Order(6, security, Side.SELL, 350, 15800, broker2, shareholder),
                 new Order(7, security, Side.SELL, 285, 15810, broker2, shareholder),
                 new Order(8, security, Side.SELL, 800, 15810, broker2, shareholder),
@@ -91,6 +92,7 @@ public class AuctionMatchingTest {
         );
         orders.forEach(order -> security.getOrderBook().enqueue(order));
 
+        security.updateMarketPrice(16000);
         security.updateOpeningPrice();
     }
 
@@ -148,6 +150,14 @@ public class AuctionMatchingTest {
         assertThat(tradeEvents).size().isEqualTo(1);
     }
 
+    @Test
+    void check_opening_price_and_tradable_quantity(){
+        Order matchingBuyOrder = new Order(100, security, Side.BUY, 1000, 15500, broker1, shareholder);
+        Order incomingSellOrder = new Order(200, security, Side.SELL, 300, 15450, broker2, shareholder);
+        orderHandler.handleEnterOrder(new EnterOrderRq(OrderEntryType.NEW_ORDER, matchingBuyOrder));
+        orderHandler.handleEnterOrder(new EnterOrderRq(OrderEntryType.NEW_ORDER, incomingSellOrder));
 
-
+        assertThat(security.getOpeningPrice()).isEqualTo(15700);
+        assertThat(security.getTradableQuantity()).isEqualTo(300);
+    }
 }
