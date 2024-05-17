@@ -2,39 +2,23 @@ package ir.ramtung.tinyme.domain;
 
 import ir.ramtung.tinyme.config.MockedJMSTestConfig;
 import ir.ramtung.tinyme.domain.entity.*;
-import ir.ramtung.tinyme.domain.service.Matcher;
 import ir.ramtung.tinyme.domain.service.OrderHandler;
 import ir.ramtung.tinyme.messaging.EventPublisher;
 import ir.ramtung.tinyme.messaging.Message;
-import ir.ramtung.tinyme.messaging.TradeDTO;
 import ir.ramtung.tinyme.messaging.event.*;
 import ir.ramtung.tinyme.messaging.request.*;
 import ir.ramtung.tinyme.repository.BrokerRepository;
 import ir.ramtung.tinyme.repository.SecurityRepository;
 import ir.ramtung.tinyme.repository.ShareholderRepository;
-import org.junit.jupiter.api.Disabled;
-import org.junit.platform.engine.support.discovery.SelectorResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.mockito.ArgumentCaptor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.Test;;
 import org.springframework.context.annotation.Import;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
-import static ir.ramtung.tinyme.domain.entity.Side.BUY;
-import static ir.ramtung.tinyme.domain.entity.Side.SELL;
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.matches;
 import static org.mockito.Mockito.verify;
 
 @SpringBootTest
@@ -135,17 +119,14 @@ public class AuctionMatchingTest {
 
 
     @Test
-    void auctionModeIsActived_newOrderArrive_newOpeningpriceIsCalculatedAndTheNewOpeningPriceIsAnnouced(){
-        // Make the orderbook empty !!!!!!!!!!!!!!
+    void auctionModeIsActived_newOrderArrive_newOpeningpriceIsCalculatedAndTheNewOpeningPriceIsAnnounced(){
+        // Make the order-book empty
         security.getOrderBook().getSellQueue().clear();
         security.getOrderBook().getBuyQueue().clear();
         assertThat(security.getOrderBook().getBuyQueue()).isEmpty();
         assertThat(security.getOrderBook().getSellQueue()).isEmpty();
         Order inQueueOrder = new Order(100, security, Side.BUY, 1, 0, broker1, shareholder);
         security.getOrderBook().enqueue(inQueueOrder);
-
-
-
 
 
         // Auction mode
@@ -160,7 +141,7 @@ public class AuctionMatchingTest {
 
 
         //OrderArrived
-        Order matchingBuyOrder = new Order(170, security, Side.SELL, 48, 15700, broker1, shareholder); // less than min amount
+        Order matchingBuyOrder = new Order(170, security, Side.SELL, 48, 15700, broker1, shareholder);
         EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(1,
                 matchingBuyOrder.getSecurity().getIsin(),
                 matchingBuyOrder.getOrderId(),
@@ -182,12 +163,10 @@ public class AuctionMatchingTest {
         assertThat(openingPriceEvent.getOpeningPrice()).isEqualTo(matchingBuyOrder.getPrice());
         assertThat(openingPriceEvent.getTradableQuantity()).isEqualTo(0);
 
-
-
     }
 
     @Test
-    void securityWithEmptyOrderBookExist_autionModeIsActivated_OpeningPriceIsZero(){
+    void securityWithEmptyOrderBookExist_auctionModeIsActivated_OpeningPriceIsZero(){
         security.getOrderBook().getSellQueue().clear();
         security.getOrderBook().getBuyQueue().clear();
         assertThat(security.getOrderBook().getBuyQueue()).isEmpty();
@@ -203,30 +182,6 @@ public class AuctionMatchingTest {
         assertThat(securityStateChangedEvent.getSecurityIsin()).isEqualTo("ABC");
         assertThat(securityStateChangedEvent.getState()).isEqualTo(MatchingState.AUCTION);
 
-
-
-
-    }
-    @Disabled
-    @Test
-    void performReopeningOperationWithTradesTest() {
-        //  orders in the queue
-        Order matchingBuyOrder = new Order(100, security, Side.BUY, 1000, 15500, broker1, shareholder);
-        Order incomingSellOrder = new Order(200, security, Side.SELL, 300, 15450, broker2, shareholder);
-        security.getOrderBook().enqueue(matchingBuyOrder);
-
-        // send request to change matching state to AUCTION
-        ChangeMatchingStateRq changeMatchingStateRq = new ChangeMatchingStateRq("ABC", MatchingState.AUCTION);
-        orderHandler.handleChangeMatchingStateRq(changeMatchingStateRq);
-
-        // perform reopening operation
-        //orderHandler.handleReopeningOperation();
-
-        // to verify that trades are executed during reopening (OrderExecutedEvent)
-        ArgumentCaptor<TradeEvent> tradeEventCaptor = ArgumentCaptor.forClass(TradeEvent.class);
-        verify(eventPublisher).publish(tradeEventCaptor.capture());
-        List<TradeEvent> tradeEvents = tradeEventCaptor.getAllValues();
-        // assert to verify the trades
     }
 
     @Test
@@ -259,7 +214,7 @@ public class AuctionMatchingTest {
         orderHandler.handleChangeMatchingStateRq(changeMatchingStateRq);
 
         // When : MEQ order entered
-        Order matchingBuyOrder = new Order(170, security, Side.BUY, 48, 15700, broker1, shareholder); // less than min amount
+        Order matchingBuyOrder = new Order(170, security, Side.BUY, 48, 15700, broker1, shareholder);
         EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(1,
                 matchingBuyOrder.getSecurity().getIsin(),
                 matchingBuyOrder.getOrderId(),
@@ -274,7 +229,7 @@ public class AuctionMatchingTest {
 
         orderHandler.handleEnterOrder(enterOrderRq);
 
-        // MEQ can not entered to an auction mode
+        // MEQ can not enter to an auction mode
         ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
         verify(eventPublisher).publish(orderRejectedCaptor.capture());
         OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
