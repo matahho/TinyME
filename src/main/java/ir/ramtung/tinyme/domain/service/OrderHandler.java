@@ -119,7 +119,7 @@ public class OrderHandler {
         for (Trade trade : trades){
             eventPublisher.publish(new TradeEvent(LocalDateTime.now(), trade.getSecurity().getIsin(),
                     trade.getPrice(), trade.getQuantity(),
-                    trade.getBuy().getShareholder().getShareholderId(), trade.getSell().getShareholder().getShareholderId()));
+                    trade.getBuy().getOrderId(), trade.getSell().getOrderId()));
         }
     }
 
