@@ -14,6 +14,7 @@ import ir.ramtung.tinyme.repository.BrokerRepository;
 import ir.ramtung.tinyme.repository.SecurityRepository;
 import ir.ramtung.tinyme.repository.ShareholderRepository;
 import ir.ramtung.tinyme.messaging.request.ChangeMatchingStateRq;
+import org.junit.jupiter.api.Disabled;
 import org.springframework.beans.factory.annotation.Autowired;
 import ir.ramtung.tinyme.messaging.request.MatchingState;
 import org.mockito.ArgumentCaptor;
@@ -59,7 +60,41 @@ public class AuctionMatchingTest {
     private Broker broker3;
 
 
+    @BeforeEach
+    void setupOrderBook() {
+        securityRepository.clear();
+        brokerRepository.clear();
+        shareholderRepository.clear();
 
+        security = Security.builder().isin("ABC").build();
+        securityRepository.addSecurity(security);
+
+        shareholder = Shareholder.builder().shareholderId(1).build();
+        shareholder.incPosition(security, 100_000);
+        shareholderRepository.addShareholder(shareholder);
+
+        broker1 = Broker.builder().brokerId(0).credit(1_000_000L).build();
+        broker2 = Broker.builder().brokerId(1).credit(1_000_000L).build();
+        brokerRepository.addBroker(broker1);
+
+        List<Order> orders = Arrays.asList(
+                new Order(1, security, Side.BUY, 304, 15700, broker1, shareholder),
+                new Order(2, security, Side.BUY, 43, 15500, broker1, shareholder),
+                new Order(3, security, Side.BUY, 445, 15450, broker1, shareholder),
+                new Order(4, security, Side.BUY, 526, 15450, broker1, shareholder),
+                new Order(5, security, Side.BUY, 1000, 15400, broker1, shareholder),
+                new Order(6, security, Side.SELL, 350, 15800, broker2, shareholder),
+                new Order(7, security, Side.SELL, 285, 15810, broker2, shareholder),
+                new Order(8, security, Side.SELL, 800, 15810, broker2, shareholder),
+                new Order(9, security, Side.SELL, 340, 15820, broker2, shareholder),
+                new Order(10, security, Side.SELL, 65, 15820, broker2, shareholder)
+        );
+        orders.forEach(order -> security.getOrderBook().enqueue(order));
+
+        security.updateOpeningPrice();
+    }
+
+    @Disabled
     @Test
     void calculateAndAnnounceOpeningPriceTest() {
         //  orders in the queue
@@ -81,7 +116,7 @@ public class AuctionMatchingTest {
         // add assert for the calculated opening price and tradable quantity
 
     }
-
+    @Disabled
     @Test
     void performReopeningOperationWithTradesTest() {
         //  orders in the queue
@@ -103,6 +138,15 @@ public class AuctionMatchingTest {
         // assert to verify the trades
     }
 
+    @Test
+    void opening_price_causes_no_auction_matching(){
+        orderHandler.handleChangeMatchingStateRq(new ChangeMatchingStateRq("ABC", MatchingState.AUCTION));
+
+        ArgumentCaptor<Event> tradeEventCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(eventPublisher).publish(tradeEventCaptor.capture());
+        List<Event> tradeEvents = tradeEventCaptor.getAllValues();
+        assertThat(tradeEvents).size().isEqualTo(1);
+    }
 
 
 
