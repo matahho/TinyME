@@ -82,8 +82,13 @@ public class OrderHandler {
             }
             if (enterOrderRq.getRequestType() == OrderEntryType.NEW_ORDER)
                 eventPublisher.publish(new OrderAcceptedEvent(enterOrderRq.getRequestId(), enterOrderRq.getOrderId()));
-            else
+            else {
                 eventPublisher.publish(new OrderUpdatedEvent(enterOrderRq.getRequestId(), enterOrderRq.getOrderId()));
+                if (security.getMatchingState() == MatchingState.AUCTION) {
+                    security.updateOpeningPrice();
+                    eventPublisher.publish(new OpeningPriceEvent(LocalDateTime.now(), security.getIsin(), security.getOpeningPrice(), security.getTradableQuantity()));
+                }
+            }
             if (!matchResult.trades().isEmpty()) {
                 eventPublisher.publish(new OrderExecutedEvent(enterOrderRq.getRequestId(), enterOrderRq.getOrderId(), matchResult.trades().stream().map(TradeDTO::new).collect(Collectors.toList())));
 
@@ -105,6 +110,10 @@ public class OrderHandler {
             Security security = securityRepository.findSecurityByIsin(deleteOrderRq.getSecurityIsin());
             security.deleteOrder(deleteOrderRq);
             eventPublisher.publish(new OrderDeletedEvent(deleteOrderRq.getRequestId(), deleteOrderRq.getOrderId()));
+            if (security.getMatchingState() == MatchingState.AUCTION) {
+                security.updateOpeningPrice();
+                eventPublisher.publish(new OpeningPriceEvent(LocalDateTime.now(), security.getIsin(), security.getOpeningPrice(), security.getTradableQuantity()));
+            }
         } catch (InvalidRequestException ex) {
             eventPublisher.publish(new OrderRejectedEvent(deleteOrderRq.getRequestId(), deleteOrderRq.getOrderId(), ex.getReasons()));
         }
