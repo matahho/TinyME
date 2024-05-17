@@ -96,6 +96,14 @@ public class AuctionMatchingTest {
         security.updateOpeningPrice();
     }
 
+    @Test
+    void checkChangeOfMatcherMode() {
+        ChangeMatchingStateRq changeMatchingStateRq = new ChangeMatchingStateRq("ABC", MatchingState.AUCTION);
+        orderHandler.handleChangeMatchingStateRq(changeMatchingStateRq);
+
+        assertThat(security.getMatchingState()).isEqualTo(MatchingState.AUCTION);
+    }
+
     @Disabled
     @Test
     void calculateAndAnnounceOpeningPriceTest() {
