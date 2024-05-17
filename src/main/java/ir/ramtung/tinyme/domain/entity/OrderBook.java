@@ -97,7 +97,7 @@ public class OrderBook {
             return 0;
         }
         Order chippestBuyOrder = this.buyQueue.getLast();
-        Order mostExpensiveSellOrder = this.sellQueue.getFirst();
+        Order mostExpensiveSellOrder = this.sellQueue.getLast();
 
         int minDistanceToLastTradePrice = Integer.MAX_VALUE;
         int openingPrice = chippestBuyOrder.getPrice();

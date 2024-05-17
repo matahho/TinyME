@@ -14,11 +14,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 class OrderBookTest {
     private Security security;
     private List<Order> orders;
+    private Broker broker;
+    private Shareholder shareholder;
     @BeforeEach
     void setupOrderBook() {
         security = Security.builder().build();
-        Broker broker = Broker.builder().build();
-        Shareholder shareholder = Shareholder.builder().build();
+        broker = Broker.builder().build();
+        shareholder = Shareholder.builder().build();
         shareholder.incPosition(security, 100_000);
         orders = Arrays.asList(
                 new Order(1, security, Side.BUY, 304, 15700, broker, shareholder),
@@ -81,7 +83,10 @@ class OrderBookTest {
 
     @Test
     void someOrdersAreExist_calculateOpeningPriceCalled_returnCorrectPrice(){
-        assertThat(security.getOrderBook().calculateOpeningPrice(100000000)).isEqualTo(15800);
+        security.getOrderBook().enqueue(new Order(1, security, Side.BUY, 1500, 15425, broker, shareholder));
+        security.getOrderBook().enqueue(new Order(1, security, Side.SELL, 2000, 15420, broker, shareholder));
+
+        assertThat(security.getOrderBook().calculateOpeningPrice(100000000)).isEqualTo(15425);
     }
 
     @Test
@@ -99,7 +104,7 @@ class OrderBookTest {
                 new Order(10, security, Side.SELL, 10, 4, broker, shareholder)
         );
         OrderBook mockedOrderBook = new OrderBook();
-        orders.forEach(order -> mockedOrderBook.enqueue(order));
+        orders.forEach(mockedOrderBook::enqueue);
 
         assertThat(mockedOrderBook.calculateOpeningPrice(3)).isEqualTo(4);
 
