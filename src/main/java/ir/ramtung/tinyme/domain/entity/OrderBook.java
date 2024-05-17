@@ -128,25 +128,6 @@ public class OrderBook {
         return openingPrice ;
     }
 
-    protected int calculateQuantityForAnOpeningPrice(int openingPrice){
-        int possibleBuyQuantity = 0;
-        int possibleSellQuantity = 0;
-        for (Order buyOrder:this.getBuyQueue()){
-            if (buyOrder.getPrice() >= openingPrice)
-                possibleBuyQuantity += buyOrder.getQuantity();
-            else
-                break;
-        }
-        for (Order sellOrder:this.getSellQueue()){
-            if (sellOrder.getPrice() <= openingPrice)
-                possibleSellQuantity += sellOrder.getQuantity();
-            else
-                break;
-        }
-        return Math.min(possibleSellQuantity, possibleBuyQuantity);
-
-    }
-
     public int getTradableQuantityByOpeningPrice(int openingPrice){
         int buyPossible = buyQueue.stream()
                 .filter(order -> order.getPrice() >= openingPrice)
