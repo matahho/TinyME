@@ -231,4 +231,38 @@ public class AuctionMatchingTest {
         assertThat(outputEvent.getErrors()).containsOnly( Message.CANNOT_USE_AUCTION_MATCHING_WITH_MEQ);
         assertThat(security.getOrderBook().getBuyQueue()).doesNotContain(matchingBuyOrder);
     }
+
+    @Test
+    void auctionModeActivated_StopLimitOrderEntered_OrderShouldReject() {
+        // Given
+        ChangeMatchingStateRq changeMatchingStateRq = new ChangeMatchingStateRq("ABC", MatchingState.AUCTION);
+        orderHandler.handleChangeMatchingStateRq(changeMatchingStateRq);
+
+        // When: Stop-limit order entered
+        Order stopLimitOrder = new Order(171, security, Side.BUY, 49, 15750, broker1, shareholder);
+        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(
+                1,
+                stopLimitOrder.getSecurity().getIsin(),
+                stopLimitOrder.getOrderId(),
+                stopLimitOrder.getEntryTime(),
+                stopLimitOrder.getSide(),
+                stopLimitOrder.getTotalQuantity(),
+                stopLimitOrder.getPrice(),
+                stopLimitOrder.getBroker().getBrokerId(),
+                stopLimitOrder.getShareholder().getShareholderId(),
+                0,0,14000
+        );
+
+        orderHandler.handleEnterOrder(enterOrderRq);
+
+        // Stop-limit orders can not be entered in auction mode
+        ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
+        verify(eventPublisher).publish(orderRejectedCaptor.capture());
+        OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
+
+        assertThat(outputEvent.getOrderId()).isEqualTo(stopLimitOrder.getOrderId());
+        assertThat(outputEvent.getErrors()).containsOnly(Message.CANNOT_USE_AUCTION_MATCHING_WITH_STOP_PRICE);
+        assertThat(security.getOrderBook().getBuyQueue()).doesNotContain(stopLimitOrder);
+    }
+
 }
