@@ -133,26 +133,56 @@ public class AuctionMatchingTest {
         assertThat(tradeEvent.getPrice()).isEqualTo(15820); //sell order price
     }
 
-    @Disabled
-    @Test
-    void calculateAndAnnounceOpeningPriceTest() {
-        //  orders in the queue
-        Order matchingBuyOrder1 = new Order(100, security, Side.BUY, 300, 15500, broker1, shareholder);
-        Order matchingBuyOrder2 = new Order(110, security, Side.BUY, 300, 15500, broker1, shareholder);
-        Order incomingSellOrder = new Order(200, security, Side.SELL, 1000, 15450, broker2, shareholder);
-        security.getOrderBook().enqueue(matchingBuyOrder1);
-        security.getOrderBook().enqueue(matchingBuyOrder2);
 
-        // send request to change matching state to AUCTION
+    @Test
+    void auctionModeIsActived_newOrderArrive_newOpeningpriceIsCalculatedAndTheNewOpeningPriceIsAnnouced(){
+        // Make the orderbook empty !!!!!!!!!!!!!!
+        security.getOrderBook().getSellQueue().clear();
+        security.getOrderBook().getBuyQueue().clear();
+        assertThat(security.getOrderBook().getBuyQueue()).isEmpty();
+        assertThat(security.getOrderBook().getSellQueue()).isEmpty();
+        Order inQueueOrder = new Order(100, security, Side.BUY, 1, 0, broker1, shareholder);
+        security.getOrderBook().enqueue(inQueueOrder);
+
+
+
+
+
+        // Auction mode
         ChangeMatchingStateRq changeMatchingStateRq = new ChangeMatchingStateRq("ABC", MatchingState.AUCTION);
         orderHandler.handleChangeMatchingStateRq(changeMatchingStateRq);
 
-        // verify that  opening price(bazgoshayi) is calculated and announced
+        ArgumentCaptor<SecurityStateChangedEvent> securityStateChangedEventCaptor = ArgumentCaptor.forClass(SecurityStateChangedEvent.class);
+        verify(eventPublisher).publish(securityStateChangedEventCaptor.capture());
+        SecurityStateChangedEvent securityStateChangedEvent = securityStateChangedEventCaptor.getValue();
+        assertThat(securityStateChangedEvent.getSecurityIsin()).isEqualTo("ABC");
+        assertThat(securityStateChangedEvent.getState()).isEqualTo(MatchingState.AUCTION);
+
+
+        //OrderArrived
+        Order matchingBuyOrder = new Order(170, security, Side.SELL, 48, 15700, broker1, shareholder); // less than min amount
+        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(1,
+                matchingBuyOrder.getSecurity().getIsin(),
+                matchingBuyOrder.getOrderId(),
+                matchingBuyOrder.getEntryTime(),
+                matchingBuyOrder.getSide(),
+                matchingBuyOrder.getTotalQuantity(),
+                matchingBuyOrder.getPrice(),
+                matchingBuyOrder.getBroker().getBrokerId(),
+                matchingBuyOrder.getShareholder().getShareholderId(),
+                0,0,0);
+        orderHandler.handleEnterOrder(enterOrderRq);
+
+
+
         ArgumentCaptor<OpeningPriceEvent> openingPriceEventCaptor = ArgumentCaptor.forClass(OpeningPriceEvent.class);
         verify(eventPublisher).publish(openingPriceEventCaptor.capture());
         OpeningPriceEvent openingPriceEvent = openingPriceEventCaptor.getValue();
         assertThat(openingPriceEvent.getSecurityIsin()).isEqualTo("ABC");
-        // add assert for the calculated opening price and tradable quantity
+        assertThat(openingPriceEvent.getOpeningPrice()).isEqualTo(matchingBuyOrder.getPrice());
+        assertThat(openingPriceEvent.getTradableQuantity()).isEqualTo(0);
+
+
 
     }
     @Disabled
