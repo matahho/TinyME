@@ -96,16 +96,16 @@ public class OrderBook {
         if (buyQueue.isEmpty() || sellQueue.isEmpty()) {
             return 0;
         }
-        Order chippestBuyOrder = this.buyQueue.getLast();
+        Order cheapestBuyOrder = this.buyQueue.getLast();
         Order mostExpensiveSellOrder = this.sellQueue.getLast();
 
         int minDistanceToLastTradePrice = Integer.MAX_VALUE;
-        int openingPrice = chippestBuyOrder.getPrice();
+        int openingPrice = cheapestBuyOrder.getPrice();
         int maximumTradableQuantity = 0;
 
 
-        for (int price = chippestBuyOrder.getPrice(); price <= mostExpensiveSellOrder.getPrice(); price++) {
-            int tradableQuantity = calculateQuantityForAnOpeningPrice(price);
+        for (int price = cheapestBuyOrder.getPrice(); price <= mostExpensiveSellOrder.getPrice(); price++) {
+            int tradableQuantity = getTradableQuantityByOpeningPrice(price);
             int distanceToLastTradePrice = Math.abs(price - lastTradePrice);
 
             if (tradableQuantity > maximumTradableQuantity) {
