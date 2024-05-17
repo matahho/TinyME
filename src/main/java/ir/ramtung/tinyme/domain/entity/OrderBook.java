@@ -140,4 +140,6 @@ public class OrderBook {
 
         return Math.min(buyPossible, sellPossible);
     }
+
+    public boolean isEmpty(){ return buyQueue.isEmpty() && sellQueue.isEmpty(); }
 }

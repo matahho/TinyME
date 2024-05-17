@@ -151,7 +151,7 @@ public class Security {
     public LinkedList<Trade> changeMatchingState(MatchingState newMatchingState, Matcher matcher) {
         MatchingState oldMatchingState = matchingState;
         this.matchingState = newMatchingState;
-        if(oldMatchingState == MatchingState.AUCTION)
+        if(oldMatchingState == MatchingState.AUCTION && !orderBook.isEmpty())
             return matcher.auctionMatch(orderBook).trades();
         return new LinkedList<Trade>();
     }
