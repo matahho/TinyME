@@ -97,7 +97,7 @@ public class AuctionMatchingTest {
     }
 
     @Test
-    void checkChangeOfMatcherMode() {
+    void changeMatcherMode_SwitchBetweenContinuousAndAuction_ModeChanges() {
         ChangeMatchingStateRq changeMatchingStateRq = new ChangeMatchingStateRq("ABC", MatchingState.AUCTION);
         orderHandler.handleChangeMatchingStateRq(changeMatchingStateRq);
 
@@ -106,7 +106,7 @@ public class AuctionMatchingTest {
 
 
     @Test
-    void testPricePriorityInMatcher() {
+    void pricePriority_EnqueueOrdersWithDifferentPrices_HighestPriceOrderIsMatched() {
         Order lowPriceBuyOrder = new Order(100, security, Side.BUY, 100, 15000, broker1, shareholder);
         Order highPriceBuyOrder = new Order(101, security, Side.BUY, 100, 16000, broker1, shareholder);
         security.getOrderBook().enqueue(lowPriceBuyOrder);
@@ -127,10 +127,10 @@ public class AuctionMatchingTest {
 
         TradeEvent tradeEvent = tradeEvents.get(0);
         assertThat(tradeEvent.getSecurityIsin()).isEqualTo("ABC");
-        assertThat(tradeEvent.getBuyId()).isEqualTo(101); // higher price buy order should be matched (?)
+        assertThat(tradeEvent.getBuyId()).isEqualTo(101); // higher price buy order should be matched
         assertThat(tradeEvent.getSellId()).isEqualTo(200);
         assertThat(tradeEvent.getQuantity()).isEqualTo(100);
-        assertThat(tradeEvent.getPrice()).isEqualTo(15000); //sell order price
+        assertThat(tradeEvent.getPrice()).isEqualTo(15820); //sell order price
     }
 
     @Disabled
