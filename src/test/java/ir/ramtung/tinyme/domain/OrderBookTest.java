@@ -107,8 +107,19 @@ class OrderBookTest {
         orders.forEach(mockedOrderBook::enqueue);
 
         assertThat(mockedOrderBook.calculateOpeningPrice(3)).isEqualTo(4);
+    }
+    @Test
+    void weAreInAuctionMode_TwoOrderHasSameTradeAbleQuantity_nearestToLastTradePriceIsFinalOpeningPrice(){
+        security.getOrderBook().getBuyQueue().clear();
+        security.getOrderBook().getSellQueue().clear();
 
+        orders = Arrays.asList(
+                new Order(1, security, Side.BUY, 100, 1000, broker, shareholder),
+                new Order(2, security, Side.SELL, 100, 2000, broker, shareholder)
+        );
+        orders.forEach(order -> security.getOrderBook().enqueue(order));
 
+        assertThat(security.getOrderBook().calculateOpeningPrice(1500)).isEqualTo(1500);
 
     }
 
