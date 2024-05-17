@@ -202,34 +202,33 @@ public class AuctionMatchingTest {
     void auctionModeActivated_MEQOrderEntered_OrderShouldReject() {
         int minimumOrderQuantity = 100;
 
-        // Enqueue orders to the order book
-        Order matchingBuyOrder = new Order(170, security, Side.BUY, 48, 15700, broker1, shareholder); // less than min amount
-
+        // Given
         ChangeMatchingStateRq changeMatchingStateRq = new ChangeMatchingStateRq("ABC", MatchingState.AUCTION);
         orderHandler.handleChangeMatchingStateRq(changeMatchingStateRq);
 
-        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(
+        // When : MEQ order entered
+        Order matchingBuyOrder = new Order(170, security, Side.BUY, 48, 15700, broker1, shareholder); // less than min amount
+        EnterOrderRq enterOrderRq = EnterOrderRq.createNewOrderRq(1,
+                matchingBuyOrder.getSecurity().getIsin(),
                 matchingBuyOrder.getOrderId(),
-                security.getIsin(),
-                matchingBuyOrder.getQuantity(),
-                LocalDateTime.now(),
+                matchingBuyOrder.getEntryTime(),
                 matchingBuyOrder.getSide(),
-                matchingBuyOrder.getQuantity(),
+                matchingBuyOrder.getTotalQuantity(),
                 matchingBuyOrder.getPrice(),
-                broker1.getBrokerId(),
-                shareholder.getShareholderId(),
-                0, 10, matchingBuyOrder.getPrice()
-        );
+                matchingBuyOrder.getBroker().getBrokerId(),
+                matchingBuyOrder.getShareholder().getShareholderId(),
+                0,
+                5);
+
         orderHandler.handleEnterOrder(enterOrderRq);
 
-        // because quantity is less than min amount order should reject
+        // MEQ can not entered to an auction mode
         ArgumentCaptor<OrderRejectedEvent> orderRejectedCaptor = ArgumentCaptor.forClass(OrderRejectedEvent.class);
         verify(eventPublisher).publish(orderRejectedCaptor.capture());
         OrderRejectedEvent outputEvent = orderRejectedCaptor.getValue();
-        System.out.println(outputEvent);
-        assertThat(outputEvent.getOrderId()).isEqualTo(matchingBuyOrder.getOrderId());
-        //    assertThat(outputEvent.getErrors()).containsOnly( Message.CANNOT_USE_AUCTION_MATCHING_WITH_MEQ // we should have);
 
-        //  assertThat(security.getOrderBook().getBuyQueue()).doesNotContain(matchingBuyOrder);
+        assertThat(outputEvent.getOrderId()).isEqualTo(matchingBuyOrder.getOrderId());
+        assertThat(outputEvent.getErrors()).containsOnly( Message.CANNOT_USE_AUCTION_MATCHING_WITH_MEQ);
+        assertThat(security.getOrderBook().getBuyQueue()).doesNotContain(matchingBuyOrder);
     }
 }
