@@ -22,4 +22,7 @@ public class Message {
     public static final String STOP_PRICE_NOT_POSITIVE = "Stop price is not-positive";
     public static final String STOP_LIMIT_ORDER_PEAK_SIZE_NOT_ZERO = "Stop Limit Order has a non-zero peak size value";
     public static final String CANNOT_SPECIFY_STOP_PRICE_FOR_A_NON_STOP_LIMIT_ORDER = "Cannot specify stop price for a non-stop limit order";
+    public static final String CANNOT_USE_AUCTION_MATCHING_WITH_STOP_PRICE = "Cannot use Auction Maching with Stop Price";
+    public static final String CANNOT_USE_AUCTION_MATCHING_WITH_MEQ = "Cannot use Auction Matching with Minimum Execution Quantity" ;
+
 }

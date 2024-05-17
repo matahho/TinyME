@@ -1,10 +1,9 @@
 package ir.ramtung.tinyme.domain.entity;
 
 import lombok.Getter;
+import org.jgroups.util.Tuple;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.*;
 
 @Getter
 public class OrderBook {
@@ -92,4 +91,55 @@ public class OrderBook {
                 .mapToInt(Order::getTotalQuantity)
                 .sum();
     }
+
+    public int calculateOpeningPrice(int lastTradePrice){
+        if (buyQueue.isEmpty() || sellQueue.isEmpty()) {
+            return 0;
+        }
+        Order cheapestBuyOrder = this.buyQueue.getLast();
+        Order mostExpensiveSellOrder = this.sellQueue.getLast();
+
+        int minDistanceToLastTradePrice = Integer.MAX_VALUE;
+        int openingPrice = cheapestBuyOrder.getPrice();
+        int maximumTradableQuantity = 0;
+
+
+        for (int price = cheapestBuyOrder.getPrice(); price <= mostExpensiveSellOrder.getPrice(); price++) {
+            int tradableQuantity = getTradableQuantityByOpeningPrice(price);
+            int distanceToLastTradePrice = Math.abs(price - lastTradePrice);
+
+            if (tradableQuantity > maximumTradableQuantity) {
+                maximumTradableQuantity = tradableQuantity;
+                openingPrice = price;
+                minDistanceToLastTradePrice = distanceToLastTradePrice;
+
+            } else if (tradableQuantity == maximumTradableQuantity) {
+                if (distanceToLastTradePrice < minDistanceToLastTradePrice) {
+                    openingPrice = price;
+                    minDistanceToLastTradePrice = distanceToLastTradePrice;
+                } else if (distanceToLastTradePrice == minDistanceToLastTradePrice) {
+                    if (price < openingPrice) {
+                        openingPrice = price;
+                    }
+                }
+            }
+        }
+
+        return openingPrice ;
+    }
+
+    public int getTradableQuantityByOpeningPrice(int openingPrice){
+        int buyPossible = buyQueue.stream()
+                .filter(order -> order.getPrice() >= openingPrice)
+                .mapToInt(Order::getTotalQuantity)
+                .sum();
+        int sellPossible = sellQueue.stream()
+                .filter(order -> order.getPrice() <= openingPrice)
+                .mapToInt(Order::getTotalQuantity)
+                .sum();
+
+        return Math.min(buyPossible, sellPossible);
+    }
+
+    public boolean isEmpty(){ return buyQueue.isEmpty() && sellQueue.isEmpty(); }
 }

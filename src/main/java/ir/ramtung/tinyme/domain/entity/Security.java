@@ -5,6 +5,7 @@ import ir.ramtung.tinyme.messaging.request.DeleteOrderRq;
 import ir.ramtung.tinyme.messaging.request.EnterOrderRq;
 import ir.ramtung.tinyme.domain.service.Matcher;
 import ir.ramtung.tinyme.messaging.Message;
+import ir.ramtung.tinyme.messaging.request.MatchingState;
 import ir.ramtung.tinyme.messaging.request.OrderEntryType;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,6 +27,10 @@ public class Security {
     private StopLimitOrderBook inactiveOrderBook = new StopLimitOrderBook();
     @Builder.Default
     private int marketPrice = 0;
+    @Builder.Default
+    private MatchingState matchingState = MatchingState.CONTINUOUS;
+    @Builder.Default
+    private int openingPrice = 0;
 
     public MatchResult newOrder(EnterOrderRq enterOrderRq, Broker broker, Shareholder shareholder, Matcher matcher) {
         //TODO : Here is a bug : if the seller does not have enough credit and want to save a stopLimitOrder . it will failed (Play with OrderStatus)
@@ -142,6 +147,19 @@ public class Security {
 
     public void updateMarketPrice(int newPrice) { this.marketPrice = newPrice; }
 
+    //TODO : This function does 2 jobs at the same time, any alternatives?
+    public LinkedList<Trade> changeMatchingState(MatchingState newMatchingState, Matcher matcher) {
+        MatchingState oldMatchingState = matchingState;
+        this.matchingState = newMatchingState;
+        if(oldMatchingState == MatchingState.AUCTION && !orderBook.isEmpty())
+            return matcher.auctionMatch(orderBook).trades();
+        return new LinkedList<Trade>();
+    }
 
+    public void updateOpeningPrice(){
+        openingPrice = this.getOrderBook().calculateOpeningPrice(this.marketPrice);
+    }
+
+    public int getTradableQuantity() { return orderBook.getTradableQuantityByOpeningPrice(openingPrice);}
 
 }
