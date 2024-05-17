@@ -185,6 +185,28 @@ public class AuctionMatchingTest {
 
 
     }
+
+    @Test
+    void securityWithEmptyOrderBookExist_autionModeIsActivated_OpeningPriceIsZero(){
+        security.getOrderBook().getSellQueue().clear();
+        security.getOrderBook().getBuyQueue().clear();
+        assertThat(security.getOrderBook().getBuyQueue()).isEmpty();
+        assertThat(security.getOrderBook().getSellQueue()).isEmpty();
+
+        // Auction mode
+        ChangeMatchingStateRq changeMatchingStateRq = new ChangeMatchingStateRq("ABC", MatchingState.AUCTION);
+        orderHandler.handleChangeMatchingStateRq(changeMatchingStateRq);
+
+        ArgumentCaptor<SecurityStateChangedEvent> securityStateChangedEventCaptor = ArgumentCaptor.forClass(SecurityStateChangedEvent.class);
+        verify(eventPublisher).publish(securityStateChangedEventCaptor.capture());
+        SecurityStateChangedEvent securityStateChangedEvent = securityStateChangedEventCaptor.getValue();
+        assertThat(securityStateChangedEvent.getSecurityIsin()).isEqualTo("ABC");
+        assertThat(securityStateChangedEvent.getState()).isEqualTo(MatchingState.AUCTION);
+
+
+
+
+    }
     @Disabled
     @Test
     void performReopeningOperationWithTradesTest() {
