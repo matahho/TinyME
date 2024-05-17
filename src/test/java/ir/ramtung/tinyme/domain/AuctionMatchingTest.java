@@ -104,6 +104,35 @@ public class AuctionMatchingTest {
         assertThat(security.getMatchingState()).isEqualTo(MatchingState.AUCTION);
     }
 
+
+    @Test
+    void testPricePriorityInMatcher() {
+        Order lowPriceBuyOrder = new Order(100, security, Side.BUY, 100, 15000, broker1, shareholder);
+        Order highPriceBuyOrder = new Order(101, security, Side.BUY, 100, 16000, broker1, shareholder);
+        security.getOrderBook().enqueue(lowPriceBuyOrder);
+        security.getOrderBook().enqueue(highPriceBuyOrder);
+
+        // sell order that can match with higher price buy order
+        Order incomingSellOrder = new Order(200, security, Side.SELL, 100, 15000, broker2, shareholder);
+        security.getOrderBook().enqueue(incomingSellOrder);
+
+        ChangeMatchingStateRq changeMatchingStateRq = new ChangeMatchingStateRq("ABC", MatchingState.CONTINUOUS);
+        orderHandler.handleChangeMatchingStateRq(changeMatchingStateRq);
+
+
+        ArgumentCaptor<TradeEvent> tradeEventCaptor = ArgumentCaptor.forClass(TradeEvent.class);
+        verify(eventPublisher).publish(tradeEventCaptor.capture());
+        List<TradeEvent> tradeEvents = tradeEventCaptor.getAllValues();
+        assertThat(tradeEvents).hasSize(1);
+
+        TradeEvent tradeEvent = tradeEvents.get(0);
+        assertThat(tradeEvent.getSecurityIsin()).isEqualTo("ABC");
+        assertThat(tradeEvent.getBuyId()).isEqualTo(101); // higher price buy order should be matched (?)
+        assertThat(tradeEvent.getSellId()).isEqualTo(200);
+        assertThat(tradeEvent.getQuantity()).isEqualTo(100);
+        assertThat(tradeEvent.getPrice()).isEqualTo(15000); //sell order price
+    }
+
     @Disabled
     @Test
     void calculateAndAnnounceOpeningPriceTest() {
