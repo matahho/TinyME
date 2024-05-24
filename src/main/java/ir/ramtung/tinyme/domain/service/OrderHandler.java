@@ -134,6 +134,18 @@ public class OrderHandler {
 
     private void validateEnterOrderRq(EnterOrderRq enterOrderRq) throws InvalidRequestException {
         List<String> errors = new LinkedList<>();
+        Security security = securityRepository.findSecurityByIsin(enterOrderRq.getSecurityIsin());
+
+
+        validateOrdinaryOrder(enterOrderRq, errors);
+        validateIcebergOrder(enterOrderRq, errors);
+        validateMEQField(enterOrderRq, errors, security);
+        validateStopLimitOrder(enterOrderRq, errors, security);
+
+        if (!errors.isEmpty())
+            throw new InvalidRequestException(errors);
+    }
+    private void validateOrdinaryOrder(EnterOrderRq enterOrderRq, List<String> errors){
         if (enterOrderRq.getOrderId() <= 0)
             errors.add(Message.INVALID_ORDER_ID);
         if (enterOrderRq.getQuantity() <= 0)
@@ -153,24 +165,11 @@ public class OrderHandler {
             errors.add(Message.UNKNOWN_BROKER_ID);
         if (shareholderRepository.findShareholderById(enterOrderRq.getShareholderId()) == null)
             errors.add(Message.UNKNOWN_SHAREHOLDER_ID);
-        if (enterOrderRq.getPeakSize() < 0 || enterOrderRq.getPeakSize() >= enterOrderRq.getQuantity())
-            errors.add(Message.INVALID_PEAK_SIZE);
-
-        validateMEQField(enterOrderRq, errors, security);
-        validateStopLimitOrder(enterOrderRq, errors, security);
-
-        if (!errors.isEmpty())
-            throw new InvalidRequestException(errors);
     }
 
-    private void validateDeleteOrderRq(DeleteOrderRq deleteOrderRq) throws InvalidRequestException {
-        List<String> errors = new LinkedList<>();
-        if (deleteOrderRq.getOrderId() <= 0)
-            errors.add(Message.INVALID_ORDER_ID);
-        if (securityRepository.findSecurityByIsin(deleteOrderRq.getSecurityIsin()) == null)
-            errors.add(Message.UNKNOWN_SECURITY_ISIN);
-        if (!errors.isEmpty())
-            throw new InvalidRequestException(errors);
+    private void validateIcebergOrder(EnterOrderRq enterOrderRq, List<String> errors){
+        if (enterOrderRq.getPeakSize() < 0 || enterOrderRq.getPeakSize() >= enterOrderRq.getQuantity())
+            errors.add(Message.INVALID_PEAK_SIZE);
     }
 
     private void validateStopLimitOrder(EnterOrderRq enterOrderRq , List<String> errors, Security security){
@@ -192,6 +191,16 @@ public class OrderHandler {
             errors.add(Message.ORDER_UPDATE_MEQ_NOT_ZERO);
         if (security != null && security.getMatchingState() != MatchingState.CONTINUOUS && enterOrderRq.getMinimumExecutionQuantity() > 0)
             errors.add(Message.CANNOT_USE_AUCTION_MATCHING_WITH_MEQ);
+    }
+
+    private void validateDeleteOrderRq(DeleteOrderRq deleteOrderRq) throws InvalidRequestException {
+        List<String> errors = new LinkedList<>();
+        if (deleteOrderRq.getOrderId() <= 0)
+            errors.add(Message.INVALID_ORDER_ID);
+        if (securityRepository.findSecurityByIsin(deleteOrderRq.getSecurityIsin()) == null)
+            errors.add(Message.UNKNOWN_SECURITY_ISIN);
+        if (!errors.isEmpty())
+            throw new InvalidRequestException(errors);
     }
 
 }
