@@ -134,13 +134,11 @@ public class OrderHandler {
 
     private void validateEnterOrderRq(EnterOrderRq enterOrderRq) throws InvalidRequestException {
         List<String> errors = new LinkedList<>();
-        Security security = securityRepository.findSecurityByIsin(enterOrderRq.getSecurityIsin());
-
 
         validateOrdinaryOrder(enterOrderRq, errors);
         validateIcebergOrder(enterOrderRq, errors);
-        validateMEQField(enterOrderRq, errors, security);
-        validateStopLimitOrder(enterOrderRq, errors, security);
+        validateMEQField(enterOrderRq, errors);
+        validateStopLimitOrder(enterOrderRq, errors);
 
         if (!errors.isEmpty())
             throw new InvalidRequestException(errors);
@@ -172,23 +170,25 @@ public class OrderHandler {
             errors.add(Message.INVALID_PEAK_SIZE);
     }
 
-    private void validateStopLimitOrder(EnterOrderRq enterOrderRq , List<String> errors, Security security){
+    private void validateStopLimitOrder(EnterOrderRq enterOrderRq , List<String> errors){
         if (enterOrderRq.getStopPrice() < 0)
             errors.add(Message.STOP_PRICE_NOT_POSITIVE);
         if (enterOrderRq.getStopPrice() != 0 && enterOrderRq.getMinimumExecutionQuantity() != 0)
             errors.add(Message.STOP_LIMIT_ORDER_MEQ_NOT_ZERO);
         if (enterOrderRq.getStopPrice() != 0 && enterOrderRq.getPeakSize() != 0)
             errors.add(Message.STOP_LIMIT_ORDER_PEAK_SIZE_NOT_ZERO);
+        Security security = securityRepository.findSecurityByIsin(enterOrderRq.getSecurityIsin());
         if (security != null && security.getMatchingState() != MatchingState.CONTINUOUS && enterOrderRq.getStopPrice() > 0)
             errors.add(Message.CANNOT_USE_AUCTION_MATCHING_WITH_STOP_PRICE);
     }
-    private void validateMEQField(EnterOrderRq enterOrderRq, List<String> errors, Security security){
+    private void validateMEQField(EnterOrderRq enterOrderRq, List<String> errors){
         if (enterOrderRq.getMinimumExecutionQuantity() < 0)
             errors.add(Message.ORDER_MEQ_IS_NOT_POSITIVE);
         if (enterOrderRq.getMinimumExecutionQuantity() > enterOrderRq.getQuantity())
             errors.add(Message.ORDER_MEQ_IS_BIGGER_THAN_QUANTITY);
         if (enterOrderRq.getRequestType() == OrderEntryType.UPDATE_ORDER && enterOrderRq.getMinimumExecutionQuantity() > 0)
             errors.add(Message.ORDER_UPDATE_MEQ_NOT_ZERO);
+        Security security = securityRepository.findSecurityByIsin(enterOrderRq.getSecurityIsin());
         if (security != null && security.getMatchingState() != MatchingState.CONTINUOUS && enterOrderRq.getMinimumExecutionQuantity() > 0)
             errors.add(Message.CANNOT_USE_AUCTION_MATCHING_WITH_MEQ);
     }
