@@ -27,14 +27,12 @@ public class Matcher {
 
             Trade trade = new Trade(newOrder.getSecurity(), matchingOrder.getPrice(), Math.min(newOrder.getQuantity(), matchingOrder.getQuantity()), newOrder, matchingOrder);
             MatchingOutcome outcome = controls.canTrade(newOrder, trade);
-            if(outcome == MatchingOutcome.EXECUTED)
-                trade.decreaseBuyersCredit();
-            else {
+            if(outcome != MatchingOutcome.EXECUTED){
                 rollbackTrades(newOrder, trades);
                 return new MatchResult(outcome, newOrder);
             }
 
-            trade.increaseSellersCredit();
+            controls.tradeAccepted(newOrder, trade);
             trades.add(trade);
             executedQuantity += trade.getQuantity();
 

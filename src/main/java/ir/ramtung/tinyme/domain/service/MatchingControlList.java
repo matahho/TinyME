@@ -13,13 +13,10 @@ public class MatchingControlList {
     @Autowired
     private List<MatchingControl> controlList;
 
-    public MatchingOutcome canStartMatching(Order order){
-        for (MatchingControl control : controlList){
-            MatchingOutcome outcome = control.canStartMatching(order);
-            if(outcome != MatchingOutcome.EXECUTED)
-                return outcome;
+    public void tradeAccepted(Order newOrder, Trade trade) {
+        for (MatchingControl control : controlList) {
+            control.tradeAccepted(newOrder, trade);
         }
-        return MatchingOutcome.EXECUTED;
     }
 
     public MatchingOutcome canTrade(Order newOrder, Trade trade) { return MatchingOutcome.EXECUTED; }
