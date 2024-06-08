@@ -147,14 +147,23 @@ public class Security {
 
     public void updateMarketPrice(int newPrice) { this.marketPrice = newPrice; }
 
-    //TODO : This function does 2 jobs at the same time, any alternatives?
     public LinkedList<Trade> changeMatchingState(MatchingState newMatchingState, Matcher matcher) {
         MatchingState oldMatchingState = matchingState;
+        updateMatchingState(newMatchingState);
+        return performAuctionMatchIfNeeded(oldMatchingState, matcher);
+    }
+
+    private void updateMatchingState(MatchingState newMatchingState) {
         this.matchingState = newMatchingState;
-        if(oldMatchingState == MatchingState.AUCTION && !orderBook.isEmpty())
+    }
+
+    private LinkedList<Trade> performAuctionMatchIfNeeded(MatchingState oldMatchingState, Matcher matcher) {
+        if (oldMatchingState == MatchingState.AUCTION && !orderBook.isEmpty()) {
             return matcher.auctionMatch(orderBook).trades();
+        }
         return new LinkedList<Trade>();
     }
+
 
     public void updateOpeningPrice(){
         openingPrice = this.getOrderBook().calculateOpeningPrice(this.marketPrice);
