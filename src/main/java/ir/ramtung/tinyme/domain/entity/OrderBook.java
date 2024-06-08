@@ -1,7 +1,6 @@
 package ir.ramtung.tinyme.domain.entity;
 
 import lombok.Getter;
-import org.jgroups.util.Tuple;
 
 import java.util.*;
 

@@ -1,7 +1,5 @@
 package ir.ramtung.tinyme.domain.entity;
 
-import ir.ramtung.tinyme.messaging.request.ChangeMatchingStateRq;
-
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;

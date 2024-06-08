@@ -3,9 +3,6 @@ package ir.ramtung.tinyme.domain;
 import ir.ramtung.tinyme.domain.entity.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
