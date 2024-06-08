@@ -12,12 +12,8 @@ import java.util.NoSuchElementException;
 
 @Service
 public class Matcher {
-    private final MatchingControlList controls;
-
-    public Matcher() {
-
-        this.controls = new MatchingControlList();
-    }
+    @Autowired
+    private MatchingControlList controls;
 
     public MatchResult match(Order newOrder) {
         OrderBook orderBook = newOrder.getSecurity().getOrderBook();
