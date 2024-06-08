@@ -135,18 +135,21 @@ public class OrderBook {
         return false;
     }
 
-
-    public int getTradableQuantityByOpeningPrice(int openingPrice){
-        int buyPossible = buyQueue.stream()
-                .filter(order -> order.getPrice() >= openingPrice)
-                .mapToInt(Order::getTotalQuantity)
-                .sum();
-        int sellPossible = sellQueue.stream()
-                .filter(order -> order.getPrice() <= openingPrice)
-                .mapToInt(Order::getTotalQuantity)
-                .sum();
-
+    public int getTradableQuantityByOpeningPrice(int openingPrice) {
+        int buyPossible = calculateTradableQuantity(buyQueue, openingPrice, true);
+        int sellPossible = calculateTradableQuantity(sellQueue, openingPrice, false);
         return Math.min(buyPossible, sellPossible);
+    }
+
+    private int calculateTradableQuantity(List<Order> orders, int openingPrice, boolean isBuy) {
+        return orders.stream()
+                .filter(order -> isOrderPriceValid(order, openingPrice, isBuy))
+                .mapToInt(Order::getTotalQuantity)
+                .sum();
+    }
+
+    private boolean isOrderPriceValid(Order order, int openingPrice, boolean isBuy) {
+        return isBuy ? order.getPrice() >= openingPrice : order.getPrice() <= openingPrice;
     }
 
     public boolean isEmpty(){ return buyQueue.isEmpty() && sellQueue.isEmpty(); }
