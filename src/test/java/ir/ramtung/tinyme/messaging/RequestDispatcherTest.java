@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-//@Disabled
+
 @SpringBootTest
 @EnableJms
 public class RequestDispatcherTest {

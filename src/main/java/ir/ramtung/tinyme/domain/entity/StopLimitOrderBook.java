@@ -26,7 +26,7 @@ public class StopLimitOrderBook extends OrderBook{
         LinkedList<Order> ordersToRemove = new LinkedList<>();
 
         for (Order order : queue) {
-            StopLimitOrder stopLimitOrder = (StopLimitOrder) order; // Cast Type
+            StopLimitOrder stopLimitOrder = (StopLimitOrder) order;
             if ((isBuyQueue && stopLimitOrder.getStopPrice() <= marketPrice) ||
                     (!isBuyQueue && stopLimitOrder.getStopPrice() >= marketPrice)) {
                 Order activatedOrder = stopLimitOrder.activate();

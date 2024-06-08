@@ -33,7 +33,7 @@ public class Security {
     private int openingPrice = 0;
 
     public MatchResult newOrder(EnterOrderRq enterOrderRq, Broker broker, Shareholder shareholder, Matcher matcher) {
-        //TODO : Here is a bug : if the seller does not have enough credit and want to save a stopLimitOrder . it will failed (Play with OrderStatus)
+
         if (enterOrderRq.getSide() == Side.SELL &&
                 !shareholder.hasEnoughPositionsOn(this, orderBook.totalSellQuantityByShareholder(shareholder) + inactiveOrderBook.totalSellQuantityByShareholder(shareholder) + enterOrderRq.getQuantity())
         )

@@ -124,7 +124,7 @@ public class Matcher {
                 newOrder.getSecurity().getOrderBook().restoreSellOrder(it.previous().getSell());
             }
         }
-        else { //newOrder.getSide() == Side.SELL
+        else {
             newOrder.getBroker().decreaseCreditBy(trades.stream().mapToLong(Trade::getTradedValue).sum());
             trades.forEach(trade -> trade.getBuy().getBroker().increaseCreditBy(trade.getTradedValue()));
 
