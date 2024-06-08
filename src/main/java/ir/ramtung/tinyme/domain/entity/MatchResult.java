@@ -34,6 +34,10 @@ public final class MatchResult {
         this.trades = trades;
     }
 
+    public MatchResult(MatchingOutcome outcome, Order remainder){
+        this(outcome, remainder, new LinkedList<>());
+    }
+
     public MatchingOutcome outcome() {
         return outcome;
     }
@@ -45,6 +49,7 @@ public final class MatchResult {
         return trades;
     }
 
+
     @Override
     public boolean equals(Object obj) {
         if (obj == this) return true;
@@ -52,11 +57,6 @@ public final class MatchResult {
         var that = (MatchResult) obj;
         return Objects.equals(this.remainder, that.remainder) &&
                 Objects.equals(this.trades, that.trades);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(remainder, trades);
     }
 
     @Override

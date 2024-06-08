@@ -33,7 +33,7 @@ public class Security {
     private int openingPrice = 0;
 
     public MatchResult newOrder(EnterOrderRq enterOrderRq, Broker broker, Shareholder shareholder, Matcher matcher) {
-        //TODO : Here is a bug : if the seller does not have enough credit and want to save a stopLimitOrder . it will failed (Play with OrderStatus)
+
         if (enterOrderRq.getSide() == Side.SELL &&
                 !shareholder.hasEnoughPositionsOn(this, orderBook.totalSellQuantityByShareholder(shareholder) + inactiveOrderBook.totalSellQuantityByShareholder(shareholder) + enterOrderRq.getQuantity())
         )
@@ -147,14 +147,23 @@ public class Security {
 
     public void updateMarketPrice(int newPrice) { this.marketPrice = newPrice; }
 
-    //TODO : This function does 2 jobs at the same time, any alternatives?
     public LinkedList<Trade> changeMatchingState(MatchingState newMatchingState, Matcher matcher) {
         MatchingState oldMatchingState = matchingState;
+        updateMatchingState(newMatchingState);
+        return performAuctionMatchIfNeeded(oldMatchingState, matcher);
+    }
+
+    private void updateMatchingState(MatchingState newMatchingState) {
         this.matchingState = newMatchingState;
-        if(oldMatchingState == MatchingState.AUCTION && !orderBook.isEmpty())
+    }
+
+    private LinkedList<Trade> performAuctionMatchIfNeeded(MatchingState oldMatchingState, Matcher matcher) {
+        if (oldMatchingState == MatchingState.AUCTION && !orderBook.isEmpty()) {
             return matcher.auctionMatch(orderBook).trades();
+        }
         return new LinkedList<Trade>();
     }
+
 
     public void updateOpeningPrice(){
         openingPrice = this.getOrderBook().calculateOpeningPrice(this.marketPrice);

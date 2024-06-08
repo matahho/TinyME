@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Data
-@NoArgsConstructor(force = true) //@NoArgsConstructor(force = true) is used, then all final fields are initialized with (0-false-null)
+@NoArgsConstructor(force = true)
 public class EnterOrderRq {
     private OrderEntryType requestType;
     private long requestId;

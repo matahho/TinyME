@@ -2,15 +2,17 @@ package ir.ramtung.tinyme.domain.service;
 
 import ir.ramtung.tinyme.domain.entity.*;
 import ir.ramtung.tinyme.messaging.request.MatchingState;
-import org.apache.commons.lang3.ObjectUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.LinkedList;
 import java.util.ListIterator;
-import java.util.NoSuchElementException;
+
 
 @Service
 public class Matcher {
+    @Autowired
+    private MatchingControlList controls;
+
     public MatchResult match(Order newOrder) {
         OrderBook orderBook = newOrder.getSecurity().getOrderBook();
         LinkedList<Trade> trades = new LinkedList<>();
@@ -22,15 +24,13 @@ public class Matcher {
                 break;
 
             Trade trade = new Trade(newOrder.getSecurity(), matchingOrder.getPrice(), Math.min(newOrder.getQuantity(), matchingOrder.getQuantity()), newOrder, matchingOrder);
-            if (newOrder.getSide() == Side.BUY && newOrder.getStatus() != OrderStatus.ACTIVATED) {
-                if (trade.buyerHasEnoughCredit())
-                    trade.decreaseBuyersCredit();
-                else {
-                    rollbackTrades(newOrder, trades);
-                    return MatchResult.notEnoughCredit();
-                }
+            MatchingOutcome outcome = controls.canTrade(newOrder, trade);
+            if(outcome != MatchingOutcome.EXECUTED){
+                rollbackTrades(newOrder, trades);
+                return new MatchResult(outcome, newOrder);
             }
-            trade.increaseSellersCredit();
+
+            controls.tradeAccepted(newOrder, trade);
             trades.add(trade);
             executedQuantity += trade.getQuantity();
 
@@ -71,7 +71,6 @@ public class Matcher {
     }
 
     public MatchResult auctionMatch(OrderBook orderBook){
-//        TODO : is it possible that no match happens?
         LinkedList<Trade> auctionTrades = new LinkedList<Trade>();
 
         while(orderBook.hasOrderOfType(orderBook.getBuyQueue().getFirst().getSide().opposite()) && orderBook.getBuyQueue().getFirst().getQuantity() > 0) {
@@ -123,7 +122,7 @@ public class Matcher {
                 newOrder.getSecurity().getOrderBook().restoreSellOrder(it.previous().getSell());
             }
         }
-        else { //newOrder.getSide() == Side.SELL
+        else {
             newOrder.getBroker().decreaseCreditBy(trades.stream().mapToLong(Trade::getTradedValue).sum());
             trades.forEach(trade -> trade.getBuy().getBroker().increaseCreditBy(trade.getTradedValue()));
 

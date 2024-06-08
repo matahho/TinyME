@@ -134,6 +134,16 @@ public class OrderHandler {
 
     private void validateEnterOrderRq(EnterOrderRq enterOrderRq) throws InvalidRequestException {
         List<String> errors = new LinkedList<>();
+
+        validateOrdinaryOrder(enterOrderRq, errors);
+        validateIcebergOrder(enterOrderRq, errors);
+        validateMEQField(enterOrderRq, errors);
+        validateStopLimitOrder(enterOrderRq, errors);
+
+        if (!errors.isEmpty())
+            throw new InvalidRequestException(errors);
+    }
+    private void validateOrdinaryOrder(EnterOrderRq enterOrderRq, List<String> errors){
         if (enterOrderRq.getOrderId() <= 0)
             errors.add(Message.INVALID_ORDER_ID);
         if (enterOrderRq.getQuantity() <= 0)
@@ -153,14 +163,34 @@ public class OrderHandler {
             errors.add(Message.UNKNOWN_BROKER_ID);
         if (shareholderRepository.findShareholderById(enterOrderRq.getShareholderId()) == null)
             errors.add(Message.UNKNOWN_SHAREHOLDER_ID);
+    }
+
+    private void validateIcebergOrder(EnterOrderRq enterOrderRq, List<String> errors){
         if (enterOrderRq.getPeakSize() < 0 || enterOrderRq.getPeakSize() >= enterOrderRq.getQuantity())
             errors.add(Message.INVALID_PEAK_SIZE);
+    }
 
-        validateMEQField(enterOrderRq, errors, security);
-        validateStopLimitOrder(enterOrderRq, errors, security);
-
-        if (!errors.isEmpty())
-            throw new InvalidRequestException(errors);
+    private void validateStopLimitOrder(EnterOrderRq enterOrderRq , List<String> errors){
+        if (enterOrderRq.getStopPrice() < 0)
+            errors.add(Message.STOP_PRICE_NOT_POSITIVE);
+        if (enterOrderRq.getStopPrice() != 0 && enterOrderRq.getMinimumExecutionQuantity() != 0)
+            errors.add(Message.STOP_LIMIT_ORDER_MEQ_NOT_ZERO);
+        if (enterOrderRq.getStopPrice() != 0 && enterOrderRq.getPeakSize() != 0)
+            errors.add(Message.STOP_LIMIT_ORDER_PEAK_SIZE_NOT_ZERO);
+        Security security = securityRepository.findSecurityByIsin(enterOrderRq.getSecurityIsin());
+        if (security != null && security.getMatchingState() != MatchingState.CONTINUOUS && enterOrderRq.getStopPrice() > 0)
+            errors.add(Message.CANNOT_USE_AUCTION_MATCHING_WITH_STOP_PRICE);
+    }
+    private void validateMEQField(EnterOrderRq enterOrderRq, List<String> errors){
+        if (enterOrderRq.getMinimumExecutionQuantity() < 0)
+            errors.add(Message.ORDER_MEQ_IS_NOT_POSITIVE);
+        if (enterOrderRq.getMinimumExecutionQuantity() > enterOrderRq.getQuantity())
+            errors.add(Message.ORDER_MEQ_IS_BIGGER_THAN_QUANTITY);
+        if (enterOrderRq.getRequestType() == OrderEntryType.UPDATE_ORDER && enterOrderRq.getMinimumExecutionQuantity() > 0)
+            errors.add(Message.ORDER_UPDATE_MEQ_NOT_ZERO);
+        Security security = securityRepository.findSecurityByIsin(enterOrderRq.getSecurityIsin());
+        if (security != null && security.getMatchingState() != MatchingState.CONTINUOUS && enterOrderRq.getMinimumExecutionQuantity() > 0)
+            errors.add(Message.CANNOT_USE_AUCTION_MATCHING_WITH_MEQ);
     }
 
     private void validateDeleteOrderRq(DeleteOrderRq deleteOrderRq) throws InvalidRequestException {
@@ -171,27 +201,6 @@ public class OrderHandler {
             errors.add(Message.UNKNOWN_SECURITY_ISIN);
         if (!errors.isEmpty())
             throw new InvalidRequestException(errors);
-    }
-
-    private void validateStopLimitOrder(EnterOrderRq enterOrderRq , List<String> errors, Security security){
-        if (enterOrderRq.getStopPrice() < 0)
-            errors.add(Message.STOP_PRICE_NOT_POSITIVE);
-        if (enterOrderRq.getStopPrice() != 0 && enterOrderRq.getMinimumExecutionQuantity() != 0)
-            errors.add(Message.STOP_LIMIT_ORDER_MEQ_NOT_ZERO);
-        if (enterOrderRq.getStopPrice() != 0 && enterOrderRq.getPeakSize() != 0)
-            errors.add(Message.STOP_LIMIT_ORDER_PEAK_SIZE_NOT_ZERO);
-        if (security != null && security.getMatchingState() != MatchingState.CONTINUOUS && enterOrderRq.getStopPrice() > 0)
-            errors.add(Message.CANNOT_USE_AUCTION_MATCHING_WITH_STOP_PRICE);
-    }
-    private void validateMEQField(EnterOrderRq enterOrderRq, List<String> errors, Security security){
-        if (enterOrderRq.getMinimumExecutionQuantity() < 0)
-            errors.add(Message.ORDER_MEQ_IS_NOT_POSITIVE);
-        if (enterOrderRq.getMinimumExecutionQuantity() > enterOrderRq.getQuantity())
-            errors.add(Message.ORDER_MEQ_IS_BIGGER_THAN_QUANTITY);
-        if (enterOrderRq.getRequestType() == OrderEntryType.UPDATE_ORDER && enterOrderRq.getMinimumExecutionQuantity() > 0)
-            errors.add(Message.ORDER_UPDATE_MEQ_NOT_ZERO);
-        if (security != null && security.getMatchingState() != MatchingState.CONTINUOUS && enterOrderRq.getMinimumExecutionQuantity() > 0)
-            errors.add(Message.CANNOT_USE_AUCTION_MATCHING_WITH_MEQ);
     }
 
 }

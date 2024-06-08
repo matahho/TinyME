@@ -136,8 +136,6 @@ public class DataLoader {
                     Security security = securityRepository.findSecurityByIsin(line[1]);
                     Broker broker = brokerRepository.findBrokerById(Long.parseLong(line[5]));
                     Shareholder shareholder = shareholderRepository.findShareholderById(Long.parseLong(line[6]));
-//orderId,isin,side,quantity,price,brokerId,shareholderId,entryTime,peakSize,displayedQuantity
-//0       1    2    3        4     5        6             7         8        9
                     int peakSize = Integer.parseInt(line[8]);
                     Order order;
                     if (peakSize == 0) {

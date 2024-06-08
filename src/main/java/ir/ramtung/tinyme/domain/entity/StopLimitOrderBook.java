@@ -12,39 +12,35 @@ public class StopLimitOrderBook extends OrderBook{
     }
 
     private LinkedList<Order> ActivatePossibleStopLimitsInBuyQueue(int marketPrice) {
-        LinkedList<Order> activatedStopLimits = new LinkedList<>();
         LinkedList<Order> buyQueue = getBuyQueue();
+        return processQueue(buyQueue, marketPrice, true, Side.BUY);
+    }
+
+    private LinkedList<Order> ActivatePossibleStopLimitsInSellQueue(int marketPrice) {
+        LinkedList<Order> sellQueue = getSellQueue();
+        return processQueue(sellQueue, marketPrice, false, Side.SELL);
+    }
+
+    private LinkedList<Order> processQueue(LinkedList<Order> queue, int marketPrice, boolean isBuyQueue, Side side) {
+        LinkedList<Order> activatedStopLimits = new LinkedList<>();
         LinkedList<Order> ordersToRemove = new LinkedList<>();
-        for (Order order : buyQueue) {
-            StopLimitOrder stopLimitOrder = ((StopLimitOrder) order); // Cast Type
-            if (stopLimitOrder.getStopPrice() <= marketPrice) {
-                Order activedOrder = stopLimitOrder.activate();
-                ordersToRemove.add(activedOrder);
-                activatedStopLimits.push(activedOrder);
+
+        for (Order order : queue) {
+            StopLimitOrder stopLimitOrder = (StopLimitOrder) order;
+            if ((isBuyQueue && stopLimitOrder.getStopPrice() <= marketPrice) ||
+                    (!isBuyQueue && stopLimitOrder.getStopPrice() >= marketPrice)) {
+                Order activatedOrder = stopLimitOrder.activate();
+                ordersToRemove.add(activatedOrder);
+                activatedStopLimits.push(activatedOrder);
             }
         }
 
         for (Order order : ordersToRemove) {
-            removeByOrderId(Side.BUY, order.getOrderId());
+            removeByOrderId(side, order.getOrderId());
         }
+
         return activatedStopLimits;
     }
-    private LinkedList<Order> ActivatePossibleStopLimitsInSellQueue(int marketPrice) {
-        LinkedList<Order> activatedStopLimits = new LinkedList<>();
-        LinkedList<Order> sellQueue = getSellQueue();
-        LinkedList<Order> ordersToRemove = new LinkedList<>();
-        for (Order order : sellQueue) {
-            StopLimitOrder stopLimitOrder = ((StopLimitOrder) order); // Cast Type
-            if (stopLimitOrder.getStopPrice() >= marketPrice) {
-                Order activedOrder = stopLimitOrder.activate();
-                ordersToRemove.add(activedOrder);
-                activatedStopLimits.push(activedOrder);
-            }
-        }
-        for (Order order : ordersToRemove) {
-            removeByOrderId(Side.SELL, order.getOrderId());
-        }
-        return activatedStopLimits;
-    }
+
 
 }

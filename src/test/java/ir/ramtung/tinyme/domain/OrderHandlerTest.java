@@ -34,6 +34,8 @@ import static org.mockito.Mockito.*;
 @DirtiesContext
 public class OrderHandlerTest {
     @Autowired
+    Matcher matcher;
+    @Autowired
     OrderHandler orderHandler;
     @Autowired
     EventPublisher eventPublisher;
@@ -125,7 +127,7 @@ public class OrderHandlerTest {
                 matchingBuyOrder, incomingSellOrder);
 
         EventPublisher mockEventPublisher = mock(EventPublisher.class, withSettings().verboseLogging());
-        OrderHandler myOrderHandler = new OrderHandler(securityRepository, brokerRepository, shareholderRepository, mockEventPublisher, new Matcher());
+        OrderHandler myOrderHandler = new OrderHandler(securityRepository, brokerRepository, shareholderRepository, mockEventPublisher, matcher);
         myOrderHandler.handleEnterOrder(EnterOrderRq.createNewOrderRq(1,
                 incomingSellOrder.getSecurity().getIsin(),
                 incomingSellOrder.getOrderId(),
