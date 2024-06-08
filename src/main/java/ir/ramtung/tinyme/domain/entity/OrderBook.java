@@ -92,41 +92,49 @@ public class OrderBook {
                 .sum();
     }
 
-    public int calculateOpeningPrice(int lastTradePrice){
+
+    public int calculateOpeningPrice(int lastTradePrice) {
         if (buyQueue.isEmpty() || sellQueue.isEmpty()) {
             return 0;
         }
-        Order cheapestBuyOrder = this.buyQueue.getLast();
-        Order mostExpensiveSellOrder = this.sellQueue.getLast();
 
+        Order cheapestBuyOrder = buyQueue.getLast();
+        Order mostExpensiveSellOrder = sellQueue.getLast();
+        return findBestOpeningPrice(cheapestBuyOrder, mostExpensiveSellOrder, lastTradePrice);
+    }
+
+    private int findBestOpeningPrice(Order cheapestBuyOrder, Order mostExpensiveSellOrder, int lastTradePrice) {
         int minDistanceToLastTradePrice = Integer.MAX_VALUE;
         int openingPrice = cheapestBuyOrder.getPrice();
         int maximumTradableQuantity = 0;
-
 
         for (int price = cheapestBuyOrder.getPrice(); price <= mostExpensiveSellOrder.getPrice(); price++) {
             int tradableQuantity = getTradableQuantityByOpeningPrice(price);
             int distanceToLastTradePrice = Math.abs(price - lastTradePrice);
 
-            if (tradableQuantity > maximumTradableQuantity) {
+            if (isBetterOpeningPrice(tradableQuantity, maximumTradableQuantity, distanceToLastTradePrice, minDistanceToLastTradePrice, price, openingPrice)) {
                 maximumTradableQuantity = tradableQuantity;
                 openingPrice = price;
                 minDistanceToLastTradePrice = distanceToLastTradePrice;
-
-            } else if (tradableQuantity == maximumTradableQuantity) {
-                if (distanceToLastTradePrice < minDistanceToLastTradePrice) {
-                    openingPrice = price;
-                    minDistanceToLastTradePrice = distanceToLastTradePrice;
-                } else if (distanceToLastTradePrice == minDistanceToLastTradePrice) {
-                    if (price < openingPrice) {
-                        openingPrice = price;
-                    }
-                }
             }
         }
 
-        return openingPrice ;
+        return openingPrice;
     }
+
+    private boolean isBetterOpeningPrice(int tradableQuantity, int maximumTradableQuantity, int distanceToLastTradePrice, int minDistanceToLastTradePrice, int price, int openingPrice) {
+        if (tradableQuantity > maximumTradableQuantity) {
+            return true;
+        } else if (tradableQuantity == maximumTradableQuantity) {
+            if (distanceToLastTradePrice < minDistanceToLastTradePrice) {
+                return true;
+            } else if (distanceToLastTradePrice == minDistanceToLastTradePrice) {
+                return price < openingPrice;
+            }
+        }
+        return false;
+    }
+
 
     public int getTradableQuantityByOpeningPrice(int openingPrice){
         int buyPossible = buyQueue.stream()
