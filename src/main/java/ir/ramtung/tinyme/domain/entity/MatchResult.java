@@ -1,5 +1,7 @@
 package ir.ramtung.tinyme.domain.entity;
 
+import ir.ramtung.tinyme.messaging.request.ChangeMatchingStateRq;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -32,6 +34,10 @@ public final class MatchResult {
         this.outcome = outcome;
         this.remainder = remainder;
         this.trades = trades;
+    }
+
+    public MatchResult(MatchingOutcome outcome, Order remainder){
+        this(outcome, remainder, new LinkedList<>());
     }
 
     public MatchingOutcome outcome() {
