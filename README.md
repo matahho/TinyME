@@ -10,7 +10,7 @@ This repository contains the Computer Assignments of Software-Engineering-1-Cour
 
 ## Note:
 
-First, 4 projects are done individually and the rest are done in groups of 3 (SeyedMahdi HajiSeyedHossein, Alireza Hosseini, Amirali Shahriary). Here you can see group projects of TinyMe.
+The first 4 projects are done individually and the rest are done in groups of 3 (SeyedMahdi HajiSeyedHossein, Alireza Hosseini, Amirali Shahriary). Here you can see group projects of TinyMe.
 
 - [Introduction to Matching Engine description](https://github.com/matahho/TinyME/blob/main/Descriptions/Introduction%20to%20Matching%20Engine.pdf)
 
