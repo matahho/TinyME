@@ -49,4 +49,5 @@ In this assignment, we were supposed to improve the design of the `TinyME` appli
 
 - [Full description of CA8](https://github.com/matahho/TinyME/blob/main/Descriptions/SE1S03-A8-Description.pdf)
 
+- [Bad smells and refactor document](https://github.com/matahho/TinyME/blob/main/Descriptions/SE1%20-%20A8%20.pdf)
 
